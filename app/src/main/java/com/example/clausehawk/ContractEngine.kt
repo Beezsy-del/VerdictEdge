@@ -36,9 +36,48 @@ class ContractEngine {
         val normalizedText = trimmed.replace(Regex("(\\w+)-\\s*\\n\\s*(\\w+)"), "$1$2")
         val normLower = normalizedText.lowercase()
 
-        // Helper to extract clean, unbroken quotes without cutting off mid-word
+        // Helper to find the first keyword actually present in the text
+        fun findMatchingKeyword(vararg keywords: String): String? {
+            return keywords.firstOrNull { normLower.contains(it.lowercase()) || lowerText.contains(it.lowercase()) }
+        }
+
+        val rawSentences = normalizedText.split(Regex("(?<=[.;\\n])\\s+"))
+            .map { it.replace(Regex("\\s+"), " ").trim() }
+            .filter { it.isNotBlank() }
+
+        fun isHeading(s: String): Boolean {
+            val cleaned = s.replace(Regex("^\\s*(?:section|clause|\\d+)[\\.\\)]?\\s*", RegexOption.IGNORE_CASE), "").trim()
+            val words = cleaned.split(Regex("\\s+"))
+            return words.size <= 5 || cleaned.length < 40
+        }
+
+        // Helper to extract clean, unbroken quotes without cutting off mid-word or returning lone titles
         fun extractQuote(keyword: String): String {
             val target = keyword.lowercase()
+            val matchingIndices = rawSentences.indices.filter { rawSentences[it].lowercase().contains(target) }
+
+            if (matchingIndices.isNotEmpty()) {
+                for (idx in matchingIndices) {
+                    val s = rawSentences[idx]
+                    if (isHeading(s)) {
+                        // If heading, check if the subsequent sentence contains the actual clause body
+                        if (idx + 1 < rawSentences.size) {
+                            val nextS = rawSentences[idx + 1]
+                            if (nextS.length >= 20) {
+                                return "$s $nextS"
+                            }
+                        }
+                    } else {
+                        // Substantive sentence: check if the preceding item was a heading
+                        if (idx > 0 && isHeading(rawSentences[idx - 1])) {
+                            return "${rawSentences[idx - 1]} $s"
+                        }
+                        return s
+                    }
+                }
+                return rawSentences[matchingIndices.first()]
+            }
+
             val targetIdx = normLower.indexOf(target)
             val sourceText = if (targetIdx != -1) normalizedText else trimmed
             val searchLower = if (targetIdx != -1) normLower else lowerText
@@ -46,23 +85,11 @@ class ContractEngine {
 
             if (idx == -1) return ""
 
-            // 1. Try sentence matching
-            val sentences = sourceText.split(Regex("(?<=[.;\\n])\\s+"))
-            for (sentence in sentences) {
-                if (sentence.lowercase().contains(target)) {
-                    val clean = sentence.replace(Regex("\\s+"), " ").trim()
-                    if (clean.length in 15..600) {
-                        return clean
-                    }
-                }
-            }
-
-            // 2. Fallback: Word-boundary-aware expansion
+            // Fallback: Word-boundary-aware expansion
             var start = idx
             while (start > 0 && sourceText[start - 1] != '.' && sourceText[start - 1] != '\n' && (idx - start) < 250) {
                 start--
             }
-            // Move start forward if stopped mid-word
             while (start > 0 && start < sourceText.length && !sourceText[start - 1].isWhitespace() && sourceText[start - 1] != '.' && sourceText[start - 1] != '\n') {
                 start--
             }
@@ -71,7 +98,6 @@ class ContractEngine {
             while (end < sourceText.length && sourceText[end] != '.' && sourceText[end] != '\n' && (end - idx) < 350) {
                 end++
             }
-            // Move end forward to complete any trailing word
             while (end < sourceText.length && !sourceText[end].isWhitespace() && sourceText[end] != '.' && sourceText[end] != '\n') {
                 end++
             }
@@ -89,20 +115,20 @@ class ContractEngine {
         // Custom Dealbreaker Rules
         for (rule in customDealbreakers) {
             val ruleClean = rule.trim()
-            if (ruleClean.isNotBlank() && lowerText.contains(ruleClean.lowercase())) {
+            if (ruleClean.isNotBlank() && (lowerText.contains(ruleClean.lowercase()) || normLower.contains(ruleClean.lowercase()))) {
                 dealbreakerMatches.add(
                     DealbreakerMatch(
                         ruleKeyword = ruleClean,
-                        matchedContext = extractQuote(ruleClean)
+                        matchedContext = extractQuote(ruleClean).ifBlank { ruleClean }
                     )
                 )
             }
         }
 
         // Statutory Voidability 1: Non-Compete (Section 27 Indian Contract Act)
-        if (lowerText.contains("non-compete") || lowerText.contains("restraint of trade") || lowerText.contains("shall not engage")) {
-            val kw = if (lowerText.contains("non-compete")) "non-compete" else "shall not engage"
-            val quote = extractQuote(kw)
+        val nonCompeteKw = findMatchingKeyword("non-compete", "restraint of trade", "shall not engage", "not engage in")
+        if (nonCompeteKw != null) {
+            val quote = extractQuote(nonCompeteKw)
             statutoryVoidabilities.add(
                 StatutoryVoidability(
                     actSection = "Section 27, Indian Contract Act 1872",
@@ -130,9 +156,9 @@ class ContractEngine {
         }
 
         // Statutory Voidability 2: Restraint of Legal Proceedings (Section 28 Indian Contract Act)
-        if (lowerText.contains("exclusive jurisdiction") || lowerText.contains("shall not approach court") || lowerText.contains("waive right")) {
-            val kw = if (lowerText.contains("jurisdiction")) "jurisdiction" else "waive"
-            val quote = extractQuote(kw)
+        val jurisdictionKw = findMatchingKeyword("exclusive jurisdiction", "shall not approach court", "waive right", "jurisdiction", "waive")
+        if (jurisdictionKw != null) {
+            val quote = extractQuote(jurisdictionKw)
             statutoryVoidabilities.add(
                 StatutoryVoidability(
                     actSection = "Section 28, Indian Contract Act 1872",
@@ -148,9 +174,9 @@ class ContractEngine {
         }
 
         // Vulnerability 3: Unbalanced Indemnity & Liability
-        if (lowerText.contains("indemnif") || lowerText.contains("hold harmless") || lowerText.contains("liable")) {
-            val kw = if (lowerText.contains("indemnif")) "indemnif" else if (lowerText.contains("hold harmless")) "hold harmless" else "liable"
-            val quote = extractQuote(kw)
+        val indemnityKw = findMatchingKeyword("indemnif", "hold harmless", "liable", "indemnity", "liability")
+        if (indemnityKw != null) {
+            val quote = extractQuote(indemnityKw)
             clauseBreakdowns.add(
                 ProblemSolutionBreakdown(
                     originalSnippet = quote,
@@ -177,8 +203,13 @@ class ContractEngine {
         }
 
         // Vulnerability 4: Unilateral Termination & Cancellation Rights
-        if (lowerText.contains("terminate") || lowerText.contains("cancellation") || lowerText.contains("right to terminate")) {
-            val quote = extractQuote("terminate")
+        val terminationRegex = Regex(
+            "\\b(?:right\\s+to\\s+terminate|may\\s+terminate|entitled\\s+to\\s+terminate|terminate(?:s)?\\s+(?:this\\s+)?agreement|immediate(?:ly)?\\s+terminate|terminate\\s+without\\s+cause|terminate\\s+for\\s+(?:convenience|cause|breach)|cancellation\\s+of\\s+(?:this\\s+)?agreement|termination\\s+for\\s+(?:convenience|cause)|termination\\s+at\\s+will)\\b",
+            RegexOption.IGNORE_CASE
+        )
+        val termMatch = terminationRegex.find(normalizedText) ?: terminationRegex.find(trimmed)
+        if (termMatch != null) {
+            val quote = extractQuote(termMatch.value).ifBlank { termMatch.value }
             clauseBreakdowns.add(
                 ProblemSolutionBreakdown(
                     originalSnippet = quote,
@@ -194,9 +225,9 @@ class ContractEngine {
         }
 
         // Vulnerability 5: Broad IP Ownership & Work-for-Hire Assignment
-        if (lowerText.contains("intellectual property") || lowerText.contains("work for hire") || lowerText.contains("assigns all rights") || lowerText.contains("ownership of deliverables")) {
-            val kw = if (lowerText.contains("work for hire")) "work for hire" else "intellectual property"
-            val quote = extractQuote(kw)
+        val ipKw = findMatchingKeyword("intellectual property", "work for hire", "assigns all rights", "ownership of deliverables")
+        if (ipKw != null) {
+            val quote = extractQuote(ipKw)
             clauseBreakdowns.add(
                 ProblemSolutionBreakdown(
                     originalSnippet = quote,
@@ -212,9 +243,9 @@ class ContractEngine {
         }
 
         // Vulnerability 6: Unilateral Modifications / Policy Alteration
-        if (lowerText.contains("modify") || lowerText.contains("amend") || lowerText.contains("reserve the right") || lowerText.contains("from time to time")) {
-            val kw = if (lowerText.contains("reserve the right")) "reserve the right" else "modify"
-            val quote = extractQuote(kw)
+        val modKw = findMatchingKeyword("reserve the right", "from time to time", "modify", "amend")
+        if (modKw != null) {
+            val quote = extractQuote(modKw)
             clauseBreakdowns.add(
                 ProblemSolutionBreakdown(
                     originalSnippet = quote,
@@ -230,8 +261,9 @@ class ContractEngine {
         }
 
         // Vulnerability 7: Auto-Renewal & Lock-in Clauses
-        if (lowerText.contains("automatically renew") || lowerText.contains("auto-renew") || lowerText.contains("perpetual renewal")) {
-            val quote = extractQuote(if (lowerText.contains("automatically renew")) "automatically renew" else "auto-renew")
+        val renewKw = findMatchingKeyword("automatically renew", "auto-renew", "perpetual renewal")
+        if (renewKw != null) {
+            val quote = extractQuote(renewKw)
             clauseBreakdowns.add(
                 ProblemSolutionBreakdown(
                     originalSnippet = quote,
@@ -248,7 +280,7 @@ class ContractEngine {
 
         // Deadlines & Timeframe Obligations
         val durationRegex = Regex("\\b\\d+\\s*(?:days|months|years|weeks|hours)\\b", RegexOption.IGNORE_CASE)
-        val durationMatches = durationRegex.findAll(trimmed).take(4).toList()
+        val durationMatches = durationRegex.findAll(normalizedText).take(4).toList()
         durationMatches.forEach { match ->
             deadlines.add(
                 DeadlineObligation(
@@ -256,14 +288,17 @@ class ContractEngine {
                     obligationEn = "Required notice period or operational deadline clause.",
                     obligationHi = "आवश्यक नोटिस अवधि या परिचालन समय सीमा।",
                     obligationKn = "ಅಗತ್ಯ ನೋಟಿಸ್ ಅವಧಿ ಅಥವಾ ಸಮಯದ ಜವಾಬ್ದಾರಿ.",
-                    quoteSnippet = extractQuote(match.value)
+                    quoteSnippet = extractQuote(match.value).ifBlank { match.value }
                 )
             )
         }
 
-        // Financial Exposures & Fees
-        val amountRegex = Regex("(?:rs\\.?|INR|\\$|USD|₹)\\s*\\d+(?:,\\d+)*(?:\\.\\d+)?|\\d+\\s*(?:percent|%|per annum)", RegexOption.IGNORE_CASE)
-        val moneyMatches = amountRegex.findAll(trimmed).take(4).toList()
+        // Financial Exposures & Fees (bounded words so 'lecturers. 4' never parses as Rs. 4)
+        val amountRegex = Regex(
+            "(?:\\b(?:rs\\.?|inr|usd)\\b|[$₹€£])\\s*\\d+(?:,\\d+)*(?:\\.\\d+)?|\\b\\d+\\s*(?:percent|%|per annum)\\b",
+            RegexOption.IGNORE_CASE
+        )
+        val moneyMatches = amountRegex.findAll(normalizedText).take(4).toList()
         moneyMatches.forEach { match ->
             financialExposures.add(
                 FinancialExposure(
@@ -274,13 +309,19 @@ class ContractEngine {
                     descriptionEn = "Explicit payment obligation, fee, or financial penalty mentioned in text.",
                     descriptionHi = "अनुबंध में उल्लिखित स्पष्ट भुगतान दायित्व या जुर्माना।",
                     descriptionKn = "ಒಪ್ಪಂದದಲ್ಲಿ ಉಲ್ಲೇಖಿಸಲಾದ ಸ್ಪಷ್ಟ ಪಾವತಿ ಜವಾಬ್ದಾರಿ.",
-                    quoteSnippet = extractQuote(match.value)
+                    quoteSnippet = extractQuote(match.value).ifBlank { match.value }
                 )
             )
         }
 
-        if (lowerText.contains("penalty") || lowerText.contains("late fee") || lowerText.contains("interest")) {
-            val quote = extractQuote(if (lowerText.contains("penalty")) "penalty" else "late fee")
+        // Financial Penalty or Liquidated Damages (distinguish from casual "interest")
+        val financialPenaltyRegex = Regex(
+            "\\b(?:late\\s+(?:fee|payment|charge)|accruing\\s+interest|compound\\s+interest|interest\\s+(?:penalty|charge|rate|accrual)|rate\\s+of\\s+interest|interest\\s+of\\s+\\d+%|penalty\\s+(?:fee|charge)?|liquidated\\s+damages)\\b",
+            RegexOption.IGNORE_CASE
+        )
+        val penaltyMatch = financialPenaltyRegex.find(normalizedText) ?: financialPenaltyRegex.find(trimmed)
+        if (penaltyMatch != null) {
+            val quote = extractQuote(penaltyMatch.value).ifBlank { penaltyMatch.value }
             financialExposures.add(
                 FinancialExposure(
                     titleEn = "Uncapped Late Fee & Interest Penalty",
@@ -304,14 +345,14 @@ class ContractEngine {
         )
 
         for ((phrase, expTriple) in ambiguityMap) {
-            if (lowerText.contains(phrase)) {
+            if (lowerText.contains(phrase) || normLower.contains(phrase)) {
                 ambiguities.add(
                     AmbiguityTerm(
                         phrase = "\"$phrase\"",
                         explanationEn = expTriple.first,
                         explanationHi = expTriple.second,
                         explanationKn = expTriple.third,
-                        quoteSnippet = extractQuote(phrase)
+                        quoteSnippet = extractQuote(phrase).ifBlank { phrase }
                     )
                 )
             }
@@ -371,8 +412,8 @@ class ContractEngine {
         )
 
         val riskLevel = when {
-            dealbreakerMatches.isNotEmpty() || statutoryVoidabilities.isNotEmpty() || clauseBreakdowns.size >= 2 -> RiskLevel.HIGH
-            deadlines.isNotEmpty() || financialExposures.isNotEmpty() -> RiskLevel.MEDIUM
+            dealbreakerMatches.isNotEmpty() || statutoryVoidabilities.isNotEmpty() || clauseBreakdowns.isNotEmpty() -> RiskLevel.HIGH
+            financialExposures.isNotEmpty() || ambiguities.isNotEmpty() || deadlines.size >= 3 -> RiskLevel.MEDIUM
             else -> RiskLevel.LOW
         }
 
@@ -409,14 +450,31 @@ class ContractEngine {
     }
 
     private fun isLegitimateContractText(text: String, lowerText: String): Boolean {
-        if (text.length < 15) return false
-        val legalKeywords = listOf(
-            "agreement", "contract", "party", "parties", "shall", "terms", "conditions",
-            "clause", "liability", "section", "right", "rights", "service", "notice",
-            "payment", "policy", "obligation", "lease", "rent", "tenant", "employee",
-            "indemnify", "jurisdiction", "अनुबंध", "समझौता", "शर्तें", "पक्ष", "ಒಪ್ಪಂದ", "ನಿಯಮಗಳು"
+        if (text.length < 25) return false
+
+        // Primary anchors: terms heavily specific to contracts & formal legal documents
+        val primaryAnchors = listOf(
+            "agreement", "contract", "hereby", "indemnif", "governing law",
+            "jurisdiction", "confidentiality", "arbitration", "non-disclosure",
+            "severability", "subcontractor", "statutory", "pursuant to",
+            "in witness whereof", "hereto", "hereinafter", "whereas",
+            "terms and conditions", "terms of service", "lease agreement",
+            "employment agreement", "memorandum of understanding",
+            "अनुबंध", "समझौता", "ಒಪ್ಪಂದ"
         )
-        val keywordMatches = legalKeywords.count { lowerText.contains(it) }
-        return keywordMatches >= 1
+        if (primaryAnchors.any { lowerText.contains(it) }) {
+            return true
+        }
+
+        // Secondary legal terms: require at least 2 distinct terms
+        val secondaryLegalTerms = listOf(
+            "party", "parties", "shall", "clause", "liability", "obligation",
+            "terminate", "termination", "breach", "warrant", "covenant",
+            "damages", "tenant", "landlord", "employer", "employee",
+            "vendor", "client", "licensor", "licensee", "counterparty",
+            "शर्तें", "पक्ष", "ನಿಯಮಗಳು", "ಶರತ್ತು"
+        )
+        val secondaryMatches = secondaryLegalTerms.count { lowerText.contains(it) }
+        return secondaryMatches >= 2
     }
 }

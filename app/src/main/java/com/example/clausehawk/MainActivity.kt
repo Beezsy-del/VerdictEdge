@@ -467,7 +467,7 @@ fun ClauseHawkApp(
         if (appState == AppState.PROCESSING_LOADING) {
             LaunchedEffect(Unit) {
                 coroutineScope.launch {
-                    val rules = dealbreakerInput.split(",").map { it.trim() }.filter { it.isNotBlank() }
+                    val rules = dealbreakerInput.split(Regex("[,;\\n|]+")).map { it.trim() }.filter { it.isNotBlank() }
                     val result = contractEngine.analyzeContract(contractText, rules)
                     analysisResult = result
 
@@ -486,8 +486,16 @@ fun ClauseHawkApp(
                             put("snippet", snippetText)
                             put("fullText", contractText)
                         }
-                        array.put(newObj)
-                        prefs.edit().putString("history_json", array.toString()).apply()
+
+                        // Bound history to latest 20 items to prevent unbounded SharedPreferences inflation
+                        val maxHistoryItems = 20
+                        val boundedArray = JSONArray()
+                        val startIndex = maxOf(0, array.length() - (maxHistoryItems - 1))
+                        for (i in startIndex until array.length()) {
+                            boundedArray.put(array.getJSONObject(i))
+                        }
+                        boundedArray.put(newObj)
+                        prefs.edit().putString("history_json", boundedArray.toString()).apply()
                     } catch (e: Exception) { }
 
                     appState = AppState.RESULTS

@@ -5,10 +5,13 @@ import android.graphics.Bitmap
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.os.ParcelFileDescriptor
+import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
@@ -24,18 +27,31 @@ class OcrManager(private val context: Context) {
         onSuccess: (String) -> Unit,
         onError: (Exception) -> Unit
     ) {
-        try {
-            val mimeType = context.contentResolver.getType(uri)
-            if (mimeType == "application/pdf" || uri.toString().endsWith(".pdf", ignoreCase = true)) {
-                processPdfUri(uri, onSuccess, onError)
-            } else {
+        val mimeType = context.contentResolver.getType(uri)
+        val isPdf = mimeType == "application/pdf" || uri.toString().endsWith(".pdf", ignoreCase = true)
+
+        if (isPdf) {
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val text = extractPdfTextSync(uri)
+                    withContext(Dispatchers.Main) {
+                        if (text.isNotBlank()) onSuccess(text) else onError(Exception("Empty PDF text"))
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        onError(e)
+                    }
+                }
+            }
+        } else {
+            try {
                 val image = InputImage.fromFilePath(context, uri)
                 recognizer.process(image)
                     .addOnSuccessListener { visionText -> onSuccess(visionText.text) }
                     .addOnFailureListener { e -> onError(e) }
+            } catch (e: Exception) {
+                onError(e)
             }
-        } catch (e: Exception) {
-            onError(e)
         }
     }
 
@@ -88,41 +104,47 @@ class OcrManager(private val context: Context) {
         }
     }
 
-    private fun processPdfUri(uri: Uri, onSuccess: (String) -> Unit, onError: (Exception) -> Unit) {
-        try {
-            val text = extractPdfTextSync(uri)
-            if (text.isNotBlank()) onSuccess(text) else onError(Exception("Empty PDF text"))
-        } catch (e: Exception) {
-            onError(e)
-        }
-    }
-
     private fun extractPdfTextSync(uri: Uri): String {
         val extracted = StringBuilder()
         val tempFile = File.createTempFile("pdf_proc_", ".pdf", context.cacheDir)
-        context.contentResolver.openInputStream(uri)?.use { input ->
-            FileOutputStream(tempFile).use { output -> input.copyTo(output) }
+        try {
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                FileOutputStream(tempFile).use { output -> input.copyTo(output) }
+            }
+
+            ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY).use { fileDescriptor ->
+                PdfRenderer(fileDescriptor).use { renderer ->
+                    val pageCount = minOf(renderer.pageCount, 15) // Max 15 pages per PDF for mobile speed
+
+                    for (i in 0 until pageCount) {
+                        var page: PdfRenderer.Page? = null
+                        var bitmap: Bitmap? = null
+                        try {
+                            page = renderer.openPage(i)
+                            // Safe scaling to prevent OutOfMemoryError on large/vector PDFs
+                            val maxDim = maxOf(page.width, page.height)
+                            val scale = if (maxDim > 0) minOf(2.0f, 2048f / maxDim) else 1.0f
+                            val renderWidth = (page.width * scale).toInt().coerceAtLeast(1)
+                            val renderHeight = (page.height * scale).toInt().coerceAtLeast(1)
+
+                            bitmap = Bitmap.createBitmap(renderWidth, renderHeight, Bitmap.Config.ARGB_8888)
+                            page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                            page.close()
+                            page = null
+
+                            val image = InputImage.fromBitmap(bitmap, 0)
+                            val result = Tasks.await(recognizer.process(image))
+                            extracted.append(result.text).append("\n")
+                        } finally {
+                            page?.close()
+                            bitmap?.recycle()
+                        }
+                    }
+                }
+            }
+        } finally {
+            tempFile.delete()
         }
-
-        val fileDescriptor = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
-        val renderer = PdfRenderer(fileDescriptor)
-        val pageCount = minOf(renderer.pageCount, 15) // Max 15 pages per PDF for mobile speed
-
-        for (i in 0 until pageCount) {
-            val page = renderer.openPage(i)
-            val bitmap = Bitmap.createBitmap(page.width * 2, page.height * 2, Bitmap.Config.ARGB_8888)
-            page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-            page.close()
-
-            val image = InputImage.fromBitmap(bitmap, 0)
-            val result = com.google.android.gms.tasks.Tasks.await(recognizer.process(image))
-            extracted.append(result.text).append("\n")
-            bitmap.recycle()
-        }
-
-        renderer.close()
-        fileDescriptor.close()
-        tempFile.delete()
         return extracted.toString().trim()
     }
 
