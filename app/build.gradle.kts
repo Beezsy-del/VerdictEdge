@@ -37,6 +37,9 @@ android {
     buildFeatures {
         compose = true
     }
+    androidResources {
+        noCompress += listOf("onnx")
+    }
 }
 
 dependencies {
@@ -55,6 +58,9 @@ dependencies {
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
+
+    // Sherpa-ONNX Neural Offline TTS
+    implementation(files("libs/sherpa-onnx-static-link-onnxruntime-1.13.8.aar"))
 
     // Testing
     testImplementation(libs.junit)
