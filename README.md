@@ -1,4 +1,4 @@
-# VerdictEdge 
+# VerdictEdge 🦅
 
 > **Air-Gapped, On-Device Legal Risk & Statutory Analyzer for Android**
 
@@ -10,19 +10,21 @@ VerdictEdge is a fully offline, privacy-first legal intelligence mobile platform
 
 ### App Demo
 
-<video src="docs/demo.mp4" width="100%" controls muted loop></video>
-
-> **Note:** Demo video asset is located at `docs/demo.mp4`.
+<p align="center">
+  <img src="docs/demo.gif" width="320" alt="VerdictEdge Demo Walkthrough" />
+</p>
 
 ---
 
 ### App Screenshots
 
-### App Screenshots
+| Input & Quick Scan | Comprehensive Analysis | Legal Warnings & Checklist |
+| :---: | :---: | :---: |
+| <img src="docs/screenshot-input.png" width="260" alt="Input Screen"/> | <img src="docs/screenshot-analysis.png" width="260" alt="Analysis Screen"/> | <img src="docs/screenshot-warnings.png" width="260" alt="Warnings Screen"/> |
 
-| Input & Quick Scan | Comprehensive Analysis | Legal Warnings & Checklist | Offline Scan History | Export PDF Report | Home Screen Widget |
-| :---: | :---: | :---: | :---: | :---: | :---: |
-| <img src="docs/screenshot-input.png" width="150" alt="Input Screen"/> | <img src="docs/screenshot-analysis.png" width="150" alt="Analysis Screen"/> | <img src="docs/screenshot-warnings.png" width="150" alt="Warnings Screen"/> | <img src="docs/screenshot-history.png" width="150" alt="History Screen"/> | <img src="docs/screenshot-pdf.png" width="150" alt="Export PDF Screen"/> | <img src="docs/screenshot-widget.png" width="150" alt="Widget Screen"/> |
+| Offline Scan History | Export PDF Report | Home Screen Widget |
+| :---: | :---: | :---: |
+| <img src="docs/screenshot-history.png" width="260" alt="History Screen"/> | <img src="docs/screenshot-pdf.png" width="260" alt="Export PDF Screen"/> | <img src="docs/screenshot-widget.png" width="260" alt="Widget Screen"/> |
 
 ---
 
@@ -42,153 +44,3 @@ VerdictEdge is a fully offline, privacy-first legal intelligence mobile platform
 
 ## 🏗️ System Architecture
 
-```
-                                  +------------------------------------+
-                                  |             VerdictEdge            |
-                                  |   (Quick Scan / Document Upload)   |
-                                  +-----------------+------------------+
-                                                    |
-                                                    v
-+---------------------------------------------------------------------------------------------------+
-|                                        MainActivity (Compose UI)                                  |
-+---------------------------------------------------------------------------------------------------+
-          |                                         |                                     |
-          v                                         v                                     v
-+-------------------+                   +-----------------------+               +-------------------+
-|    OcrManager     |                   |    ContractEngine     |               |   VoiceManager    |
-| (Google ML Kit)   |                   | (Gemma 2B / MediaPipe)|               |  (Sherpa-ONNX /   |
-+---------+---------+                   +-----------+-----------+               |   System TTS)     |
-          |                                         |                           +---------+---------+
-          v                                         v                                     v
-+-------------------+                   +-----------------------+               +-------------------+
-| Dynamic Image/PDF |                   |  Risk, Statutory &    |               | Multilingual      |
-| Text Extraction   |                   |  Ambiguity Engine     |               | Audio Playback    |
-+---------+---------+                   +-----------+-----------+               +---------+---------+
-          |                                         |                                     |
-          +--------------------+--------------------+-------------------------------------+
-                               |
-                               v
-               +-------------------------------+
-               |     Analysis Result Model     |
-               |  (Risk, Voidability, PDF)     |
-               +---------------+---------------+
-                               |
-                               v
-               +-------------------------------+
-               |  Local Encrypted History Store|
-               |       (SharedPreferences)     |
-               +---------------+---------------+
-```
-
----
-
-## 🛠️ Technology Stack
-
-| Layer | Technology / Library |
-| :--- | :--- |
-| **Language** | Kotlin 1.9+ |
-| **UI Framework** | Jetpack Compose, Material3, Material Icons |
-| **On-Device LLM** | Google MediaPipe LLM Inference API (`tasks-genai`), Gemma 2B |
-| **Vision / OCR** | Google ML Kit Text Recognition (`com.google.mlkit:text-recognition`) |
-| **Neural TTS Engine** | Sherpa-ONNX (`vits-piper`), Android `TextToSpeech` |
-| **Document Processing** | Android native `PdfDocument`, FileProvider API |
-| **Concurrency & Async** | Kotlin Coroutines, StateFlow / Compose State |
-| **System Integration** | Android AppWidget Provider, System Intent Receivers |
-
----
-
-## ⚖️ Legal Intelligence & Statutory Scanners
-
-VerdictEdge automatically detects and extracts:
-
-1. **Statutory Voidability Warnings:**
-   * **Section 27 (Indian Contract Act):** Restraint of trade, occupation, or business.
-   * **Section 28 (Indian Contract Act):** Unlawful restraint of legal proceedings or jurisdiction limitations.
-2. **Vulnerabilities & Lopsided Provisions:**
-   * **Unbalanced Indemnity & Unlimited Liabilities**
-   * **Unilateral Termination & One-sided Modifications**
-   * **Irrevocable IP Assignment & Perpetuity**
-   * **Hidden Auto-Renewals & Excessive Termination Fees**
-3. **Financial Exposure Analysis:**
-   * Calculates financial caps, penalty amounts, interest rates, and fee obligations.
-4. **Ambiguity & Discretion Detector:**
-   * Flags subjective phrases like *"at sole discretion"*, *"reasonable efforts"*, *"from time to time"*, and *"as deemed fit"*.
-
----
-
-## 📁 Repository Structure
-
-```
-VerdictEdge/
-├── app/
-│   └── src/
-│       └── main/
-│           ├── java/com/example/VerdictEdge/
-│           │   ├── MainActivity.kt        # Main Compose Application Shell & PDF Exporter
-│           │   ├── ContractEngine.kt      # Core Risk, Statutory Analysis & Gemma Pipeline
-│           │   ├── OcrManager.kt          # ML Kit Image/PDF OCR Processor
-│           │   ├── VoiceManager.kt        # Sherpa-ONNX & System TTS Engine
-│           │   └── QuickScanWidget.kt     # AppWidget Provider for Home Screen Quick Scan
-│           └── res/
-│               ├── layout/
-│               │   └── widget_quick_scan.xml # Home Screen Widget Layout
-│               └── xml/
-│                   └── quick_scan_widget_info.xml
-├── docs/                                  # Assets directory for README media
-│   ├── demo.mp4                           # App Walkthrough Video
-│   ├── screenshot-input.png               # Input & Scanning Screen
-│   ├── screenshot-analysis.png            # Contract Analysis Output
-│   ├── screenshot-warnings.png            # Statutory Warning Details
-│   └── screenshot-history.png             # Local History Drawer
-├── build.gradle.kts
-├── settings.gradle.kts
-└── README.md
-```
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-* Android Studio Jellyfish | 2023.3.1 or newer
-* Android SDK 26 (Android 8.0) or higher (Target SDK: 34)
-* Physical Android device recommended for camera OCR & Sherpa-ONNX speech synthesis
-
-### Installation
-
-1. **Clone the Repository:**
-   ```bash
-   git clone [https://github.com/ssaiskanda0-spec/VerdictEdge](https://github.com/ssaiskanda0-spec/VerdictEdge)
-   cd VerdictEdge
-   ```
-
-2. **Model Setup (Gemma 2B & Sherpa-ONNX):**
-   * Download the `gemma-2b-it-gpu-int4.bin` model file from Google AI Edge / Kaggle.
-   * Place the model file in the app assets folder:
-     ```
-     app/src/main/assets/gemma-2b-it-gpu-int4.bin
-     ```
-   * (Optional) Place Sherpa-ONNX VITS voice models (`vits-piper-en_US-amy-medium-int8`) in `assets/sherpa_models/`.
-
-3. **Build & Run:**
-   * Open the project in Android Studio.
-   * Sync Gradle files.
-   * Run the `app` configuration on your Android device.
-
----
-
-## 📲 Home Screen Widget Setup
-
-VerdictEdge includes a quick launcher widget for instant contract scanning:
-
-1. Long-press on your device's home screen.
-2. Select **Widgets** and scroll down to **VerdictEdge**.
-3. Drag the **Quick Scan** widget to your home screen.
-4. Tap **📷 Camera** to launch directly into single-page OCR or **📂 Upload** to parse multi-page PDFs.
-
----
-
-## ⚠️ Disclaimer
-
-VerdictEdge / VerdictEdge is an automated artificial intelligence tool designed for informational and educational assistance only. It does not constitute formal legal advice. For binding contract evaluations, always consult a qualified legal practitioner.
