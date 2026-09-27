@@ -10,9 +10,9 @@ import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import android.os.Bundle
-import android.speech.tts.TextToSpeech
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -50,7 +50,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
-import java.util.Locale
 
 enum class AppState {
     INIT_LOADING,
@@ -105,31 +104,32 @@ fun buildFullAudioSummary(result: AnalysisResult, lang: Language): String {
     val builder = StringBuilder()
 
     val riskTitle = when (lang) {
-        Language.ENGLISH -> "VerdictEdge Risk Analysis Report."
-        Language.HINDI -> "वर्डिक्टएज जोखिम विश्लेषण रिपोर्ट।"
-        Language.KANNADA -> "ವರ್ಡಿಕ್ಟ್-ಎಡ್ಜ್ ಅಪಾಯದ ವಿಶ್ಲೇಷಣೆ ವರದಿ."
+        Language.ENGLISH -> "VerdictEdge Contract Analysis."
+        Language.HINDI -> "वर्डिक्टएज अनुबंध विश्लेषण।"
+        Language.KANNADA -> "ವರ್ಡಿಕ್ಟ್-ಎಡ್ಜ್ ಕರಾರು ವಿಶ್ಲೇಷಣೆ."
     }
     builder.append(riskTitle).append(" ")
 
     val overallSummary = when (lang) {
-        Language.ENGLISH -> "Overall Assessment: ${result.riskLevel.labelEn}. ${result.summaryEn}"
-        Language.HINDI -> "कुल मूल्यांकन: ${result.riskLevel.labelHi}। ${result.summaryHi}"
-        Language.KANNADA -> "ಒಟ್ಟು ಮೌಲ್ಯಮಾಪನ: ${result.riskLevel.labelKn}. ${result.summaryKn}"
+        Language.ENGLISH -> "Overall, this agreement is assessed as ${result.riskLevel.labelEn.lowercase().replaceFirstChar { it.uppercase() }}! ${result.summaryEn}"
+        Language.HINDI -> "कुल मिलाकर, इस समझौते का मूल्यांकन ${result.riskLevel.labelHi} के रूप में किया गया है! ${result.summaryHi}"
+        Language.KANNADA -> "ಒಟ್ಟಾರೆಯಾಗಿ, ಈ ಒಪ್ಪಂದವನ್ನು ${result.riskLevel.labelKn} ಎಂದು ಮೌಲ್ಯಮಾಪನ ಮಾಡಲಾಗಿದೆ! ${result.summaryKn}"
     }
     builder.append(overallSummary).append(" ")
 
     if (result.statutoryVoidabilities.isNotEmpty()) {
+        val count = result.statutoryVoidabilities.size
         val statHeader = when (lang) {
-            Language.ENGLISH -> "Warning: ${result.statutoryVoidabilities.size} statutory voidability issues detected under Indian Law."
-            Language.HINDI -> "चेतावनी: भारतीय कानून के तहत ${result.statutoryVoidabilities.size} वैधानिक अमान्यता के मामले मिले।"
-            Language.KANNADA -> "ಎಚ್ಚರಿಕೆ: ಭಾರತೀಯ ಕಾನೂನಿನಡಿ ${result.statutoryVoidabilities.size} ಶಾಸನಬದ್ಧ ಅಮಾನ್ಯತೆಯ ವಿಷಯಗಳು ಕಂಡುಬಂದಿವೆ."
+            Language.ENGLISH -> "Important alert! We detected $count statutory voidability concern${if (count > 1) "s" else ""} under Indian Law."
+            Language.HINDI -> "महत्वपूर्ण चेतावनी! हमें भारतीय कानून के तहत $count वैधानिक अमान्यता चिंताएं मिली हैं।"
+            Language.KANNADA -> "ಮುಖ್ಯ ಎಚ್ಚರಿಕೆ! ಭಾರತೀಯ ಕಾನೂನಿನಡಿ $count ಶಾಸನಬದ್ಧ ಅಮಾನ್ಯತೆಯ ವಿಷಯಗಳು ಕಂಡುಬಂದಿವೆ."
         }
         builder.append(statHeader).append(" ")
         result.statutoryVoidabilities.forEach { stat ->
             val statReason = when (lang) {
-                Language.ENGLISH -> "${stat.actSection}: ${stat.titleEn}. ${stat.legalReasonEn}"
-                Language.HINDI -> "${stat.actSection}: ${stat.titleHi}। ${stat.legalReasonHi}"
-                Language.KANNADA -> "${stat.actSection}: ${stat.titleKn}. ${stat.legalReasonKn}"
+                Language.ENGLISH -> "Regarding ${stat.actSection}, ${stat.titleEn} — ${stat.legalReasonEn}"
+                Language.HINDI -> "${stat.actSection} के संबंध में, ${stat.titleHi} — ${stat.legalReasonHi}"
+                Language.KANNADA -> "${stat.actSection} ಕುರಿತು, ${stat.titleKn} — ${stat.legalReasonKn}"
             }
             builder.append(statReason).append(" ")
         }
@@ -137,16 +137,16 @@ fun buildFullAudioSummary(result: AnalysisResult, lang: Language): String {
 
     if (result.clauseBreakdowns.isNotEmpty()) {
         val vulnHeader = when (lang) {
-            Language.ENGLISH -> "Key Vulnerabilities and Recommendations:"
-            Language.HINDI -> "मुख्य कमियां और सिफारिशें:"
-            Language.KANNADA -> "ಪ್ರಮುಖ ಲೋಪದೋಷಗಳು ಮತ್ತು ಶಿಫಾರಸುಗಳು:"
+            Language.ENGLISH -> "Here are the top key clauses to watch out for."
+            Language.HINDI -> "यहाँ ध्यान देने योग्य मुख्य खंड दिए गए हैं।"
+            Language.KANNADA -> "ಗಮನಿಸಬೇಕಾದ ಪ್ರಮುಖ ಷರತ್ತುಗಳು ಇಲ್ಲಿವೆ."
         }
         builder.append(vulnHeader).append(" ")
         result.clauseBreakdowns.take(3).forEach { cb ->
             val itemText = when (lang) {
-                Language.ENGLISH -> "Problem: ${cb.problemEn}. Solution: ${cb.solutionEn}"
-                Language.HINDI -> "समस्या: ${cb.problemHi}। समाधान: ${cb.solutionHi}"
-                Language.KANNADA -> "ಸಮಸ್ಯೆ: ${cb.problemKn}. ಪರಿಹಾರ: ${cb.solutionKn}"
+                Language.ENGLISH -> "The issue? ${cb.problemEn}. Our recommended fix: ${cb.solutionEn}"
+                Language.HINDI -> "समस्या क्या है? ${cb.problemHi}। हमारा अनुशंसित समाधान: ${cb.solutionHi}"
+                Language.KANNADA -> "ಸಮಸ್ಯೆ ಏನು? ${cb.problemKn}. ನಮ್ಮ ಶಿಫಾರಸು: ${cb.solutionKn}"
             }
             builder.append(itemText).append(" ")
         }
@@ -155,9 +155,9 @@ fun buildFullAudioSummary(result: AnalysisResult, lang: Language): String {
     if (result.financialExposures.isNotEmpty()) {
         val fin = result.financialExposures.first()
         val finText = when (lang) {
-            Language.ENGLISH -> "Financial Exposure Note: ${fin.titleEn}, Amount: ${fin.amountOrCost}."
-            Language.HINDI -> "वित्तीय जोखिम नोट: ${fin.titleHi}, राशि: ${fin.amountOrCost}।"
-            Language.KANNADA -> "ಹಣಕಾಸು ಅಪಾಯ ಟಿಪ್ಪಣಿ: ${fin.titleKn}, ಮೊತ್ತ: ${fin.amountOrCost}."
+            Language.ENGLISH -> "Please take note of financial exposure: ${fin.titleEn}, totaling ${fin.amountOrCost}."
+            Language.HINDI -> "कृपया वित्तीय जोखिम पर ध्यान दें: ${fin.titleHi}, कुल राशि: ${fin.amountOrCost}।"
+            Language.KANNADA -> "ದಯವಿಟ್ಟು ಆರ್ಥಿಕ ಅಪಾಯವನ್ನು ಗಮನಿಸಿ: ${fin.titleKn}, ಒಟ್ಟು: ${fin.amountOrCost}."
         }
         builder.append(finText)
     }
@@ -165,50 +165,37 @@ fun buildFullAudioSummary(result: AnalysisResult, lang: Language): String {
     return builder.toString()
 }
 
-class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
-    private var tts: TextToSpeech? = null
-    private var isTtsReady = false
+class MainActivity : ComponentActivity() {
+    private lateinit var voiceManager: VoiceManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        tts = TextToSpeech(this, this)
+        voiceManager = VoiceManager(this)
 
         setContent {
             OfficialTheme {
                 ClauseHawkApp(
-                    onSpeakText = { text -> speakOut(text) },
-                    onStopAudio = { tts?.stop() },
+                    onSpeakText = { text, lang -> voiceManager.speak(text, lang) },
+                    onStopAudio = { voiceManager.stop() },
+                    onSelectVoiceEngine = { type -> voiceManager.setEngineType(type) },
                     onExportPdf = { result, contractText, lang -> generatePdfReport(this, result, contractText, lang) }
                 )
             }
         }
     }
 
-    override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            tts?.language = Locale.US
-            isTtsReady = true
-        }
-    }
-
-    private fun speakOut(text: String) {
-        if (isTtsReady) {
-            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "ClauseHawkTTS")
-        }
-    }
-
     override fun onDestroy() {
-        tts?.stop()
-        tts?.shutdown()
+        voiceManager.release()
         super.onDestroy()
     }
 }
 
 @Composable
 fun ClauseHawkApp(
-    onSpeakText: (String) -> Unit,
+    onSpeakText: (String, Language) -> Unit,
     onStopAudio: () -> Unit,
+    onSelectVoiceEngine: (VoiceEngineType) -> Unit,
     onExportPdf: (AnalysisResult, String, Language) -> Unit
 ) {
     val context = LocalContext.current
@@ -224,8 +211,9 @@ fun ClauseHawkApp(
     var selectedLanguage by remember { mutableStateOf(Language.ENGLISH) }
     var processingProgress by remember { mutableStateOf("Scanning text...") }
     var isAudioPlaying by remember { mutableStateOf(false) }
+    var selectedVoiceEngine by remember { mutableStateOf(VoiceEngineType.NEURAL_SHERPA) }
 
-    // Summary screen font size control state (applies across all summary and detail text)
+    // Summary screen font size control state
     var summaryFontSize by remember { mutableStateOf(13) }
 
     var selectedDictWord by remember { mutableStateOf<Pair<String, String>?>(null) }
@@ -335,6 +323,31 @@ fun ClauseHawkApp(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
+
+        // Intercept system back gestures & hardware back button
+        BackHandler(
+            enabled = selectedDictWord != null || showHistoryDrawer || appState == AppState.RESULTS || appState == AppState.PROCESSING_LOADING
+        ) {
+            when {
+                selectedDictWord != null -> {
+                    selectedDictWord = null
+                }
+                showHistoryDrawer -> {
+                    showHistoryDrawer = false
+                }
+                appState == AppState.RESULTS -> {
+                    if (isAudioPlaying) {
+                        onStopAudio()
+                        isAudioPlaying = false
+                    }
+                    appState = AppState.INPUT
+                }
+                appState == AppState.PROCESSING_LOADING -> {
+                    isOcrExtracting = false
+                    appState = AppState.INPUT
+                }
+            }
+        }
 
         if (appState == AppState.INPUT) {
             Surface(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding(), color = Color(0xFF000000)) {
@@ -470,7 +483,7 @@ fun ClauseHawkApp(
         if (appState == AppState.PROCESSING_LOADING) {
             LaunchedEffect(Unit) {
                 coroutineScope.launch {
-                    val rules = dealbreakerInput.split(",").map { it.trim() }.filter { it.isNotBlank() }
+                    val rules = dealbreakerInput.split(Regex("[,;\\n|]+")).map { it.trim() }.filter { it.isNotBlank() }
                     val result = contractEngine.analyzeContract(contractText, rules)
                     analysisResult = result
 
@@ -489,8 +502,16 @@ fun ClauseHawkApp(
                             put("snippet", snippetText)
                             put("fullText", contractText)
                         }
-                        array.put(newObj)
-                        prefs.edit().putString("history_json", array.toString()).apply()
+
+                        // Bound history to latest 20 items to prevent unbounded SharedPreferences inflation
+                        val maxHistoryItems = 20
+                        val boundedArray = JSONArray()
+                        val startIndex = maxOf(0, array.length() - (maxHistoryItems - 1))
+                        for (i in startIndex until array.length()) {
+                            boundedArray.put(array.getJSONObject(i))
+                        }
+                        boundedArray.put(newObj)
+                        prefs.edit().putString("history_json", boundedArray.toString()).apply()
                     } catch (e: Exception) { }
 
                     appState = AppState.RESULTS
@@ -535,16 +556,40 @@ fun ClauseHawkApp(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = when (selectedLanguage) {
-                                Language.ENGLISH -> "Analysis Report"
-                                Language.HINDI -> "विश्लेषण रिपोर्ट"
-                                Language.KANNADA -> "ವಿಶ್ಲೇಷಣೆ ವರದಿ"
-                            },
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(
+                                onClick = {
+                                    if (isAudioPlaying) {
+                                        onStopAudio()
+                                        isAudioPlaying = false
+                                    }
+                                    appState = AppState.INPUT
+                                },
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF181818))
+                                    .border(1.dp, Color(0xFF333333), CircleShape)
+                            ) {
+                                Text(
+                                    text = "←",
+                                    color = Color.White,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = when (selectedLanguage) {
+                                    Language.ENGLISH -> "Analysis Report"
+                                    Language.HINDI -> "विश्लेषण रिपोर्ट"
+                                    Language.KANNADA -> "ವಿಶ್ಲೇಷಣೆ ವರದಿ"
+                                },
+                                fontSize = 23.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
 
                         Button(
                             onClick = { onExportPdf(result, contractText, selectedLanguage) },
@@ -583,7 +628,15 @@ fun ClauseHawkApp(
                                     .weight(1f)
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(if (isSelected) Color.White else Color.Transparent)
-                                    .clickable { selectedLanguage = lang }
+                                    .clickable {
+                                        if (selectedLanguage != lang) {
+                                            if (isAudioPlaying) {
+                                                onStopAudio()
+                                                isAudioPlaying = false
+                                            }
+                                            selectedLanguage = lang
+                                        }
+                                    }
                                     .padding(vertical = 8.dp),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -672,52 +725,111 @@ fun ClauseHawkApp(
                         modifier = Modifier.fillMaxWidth().border(1.dp, Color(0xFF333333), RoundedCornerShape(12.dp)),
                         colors = CardDefaults.cardColors(containerColor = Color(0xFF121212))
                     ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp).fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = when (selectedLanguage) {
-                                        Language.ENGLISH -> "🔊 Plain-Language Audio Summary"
-                                        Language.HINDI -> "🔊 सरल भाषा ऑडियो सारांश"
-                                        Language.KANNADA -> "🔊 ಸರಳ ಭಾಷೆಯ ಧ್ವನಿ ಸಾರಾಂಶ"
-                                    },
-                                    fontSize = bodyFontSize, fontWeight = FontWeight.Bold, color = Color.White
-                                )
-                                Text(
-                                    text = when (selectedLanguage) {
-                                        Language.ENGLISH -> "Listen to full spoken risk report"
-                                        Language.HINDI -> "पूर्ण बोली जाने वाली जोखिम रिपोर्ट सुनें"
-                                        Language.KANNADA -> "ಸಂಪೂರ್ಣ ಧ್ವನಿ ವರದಿಯನ್ನು ಆಲಿಸಿ"
-                                    },
-                                    fontSize = captionFontSize, color = Color(0xFFA0A0A0)
-                                )
-                            }
-                            Button(
-                                onClick = {
-                                    if (isAudioPlaying) {
-                                        onStopAudio()
-                                        isAudioPlaying = false
-                                    } else {
-                                        val fullSpeech = buildFullAudioSummary(result, selectedLanguage)
-                                        onSpeakText(fullSpeech)
-                                        isAudioPlaying = true
-                                    }
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = if (isAudioPlaying) Color(0xFF333333) else Color.White),
-                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
-                                shape = RoundedCornerShape(8.dp)
+                        Column(modifier = Modifier.padding(12.dp).fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = if (isAudioPlaying) {
-                                        when (selectedLanguage) { Language.ENGLISH -> "Stop"; Language.HINDI -> "रोकें"; Language.KANNADA -> "ನಿಲ್ಲಿಸಿ" }
-                                    } else {
-                                        when (selectedLanguage) { Language.ENGLISH -> "Play"; Language.HINDI -> "चलाएं"; Language.KANNADA -> "ಪ್ಲೇ" }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = when (selectedLanguage) {
+                                            Language.ENGLISH -> "🔊 Plain-Language Audio Summary"
+                                            Language.HINDI -> "🔊 सरल भाषा ऑडियो सारांश"
+                                            Language.KANNADA -> "🔊 ಸರಳ ಭಾಷೆಯ ಧ್ವನಿ ಸಾರಾಂಶ"
+                                        },
+                                        fontSize = bodyFontSize, fontWeight = FontWeight.Bold, color = Color.White
+                                    )
+                                    Text(
+                                        text = when (selectedLanguage) {
+                                            Language.ENGLISH -> "Listen to full spoken risk report"
+                                            Language.HINDI -> "पूर्ण बोली जाने वाली जोखिम रिपोर्ट सुनें"
+                                            Language.KANNADA -> "ಸಂಪೂರ್ಣ ಧ್ವನಿ ವರದಿಯನ್ನು ಆಲಿಸಿ"
+                                        },
+                                        fontSize = captionFontSize, color = Color(0xFFA0A0A0)
+                                    )
+                                }
+                                Button(
+                                    onClick = {
+                                        if (isAudioPlaying) {
+                                            onStopAudio()
+                                            isAudioPlaying = false
+                                        } else {
+                                            val fullSpeech = buildFullAudioSummary(result, selectedLanguage)
+                                            onSpeakText(fullSpeech, selectedLanguage)
+                                            isAudioPlaying = true
+                                        }
                                     },
-                                    fontSize = 12.sp, color = if (isAudioPlaying) Color.White else Color.Black, fontWeight = FontWeight.Bold
-                                )
+                                    colors = ButtonDefaults.buttonColors(containerColor = if (isAudioPlaying) Color(0xFF333333) else Color.White),
+                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text(
+                                        text = if (isAudioPlaying) {
+                                            when (selectedLanguage) { Language.ENGLISH -> "Stop"; Language.HINDI -> "रोकें"; Language.KANNADA -> "ನಿಲ್ಲಿಸಿ" }
+                                        } else {
+                                            when (selectedLanguage) { Language.ENGLISH -> "Play"; Language.HINDI -> "चलाएं"; Language.KANNADA -> "ಪ್ಲೇ" }
+                                        },
+                                        fontSize = 12.sp, color = if (isAudioPlaying) Color.White else Color.Black, fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color(0xFF1E1E1E), RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "Voice: ",
+                                        fontSize = 11.sp,
+                                        color = Color(0xFF888888)
+                                    )
+                                    Text(
+                                        text = when (selectedLanguage) {
+                                            Language.ENGLISH -> {
+                                                if (selectedVoiceEngine == VoiceEngineType.NEURAL_SHERPA) "⚡ Neural (Sherpa-ONNX)" else "📱 Standard (OG Voice)"
+                                            }
+                                            Language.HINDI -> "🇮🇳 Native Hindi (Expressive)"
+                                            Language.KANNADA -> "🇮🇳 Native Kannada (Expressive)"
+                                        },
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (selectedLanguage == Language.ENGLISH && selectedVoiceEngine == VoiceEngineType.NEURAL_SHERPA) {
+                                            Color(0xFF64B5F6)
+                                        } else {
+                                            Color(0xFF81C784)
+                                        }
+                                    )
+                                }
+                                if (selectedLanguage == Language.ENGLISH) {
+                                    Text(
+                                        text = if (selectedVoiceEngine == VoiceEngineType.NEURAL_SHERPA) "Switch to OG" else "Switch to Neural",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFFFB74D),
+                                        modifier = Modifier
+                                            .clickable {
+                                                if (isAudioPlaying) {
+                                                    onStopAudio()
+                                                    isAudioPlaying = false
+                                                }
+                                                val newEngine = if (selectedVoiceEngine == VoiceEngineType.NEURAL_SHERPA) {
+                                                    VoiceEngineType.SYSTEM_OG
+                                                } else {
+                                                    VoiceEngineType.NEURAL_SHERPA
+                                                }
+                                                selectedVoiceEngine = newEngine
+                                                onSelectVoiceEngine(newEngine)
+                                            }
+                                            .padding(4.dp)
+                                    )
+                                }
                             }
                         }
                     }
@@ -1041,6 +1153,10 @@ fun ClauseHawkApp(
 
                     Button(
                         onClick = {
+                            if (isAudioPlaying) {
+                                onStopAudio()
+                                isAudioPlaying = false
+                            }
                             contractText = ""
                             analysisResult = null
                             appState = AppState.INPUT
@@ -1055,7 +1171,7 @@ fun ClauseHawkApp(
             }
         }
 
-        // Full Screen Slide-In History Drawer (Monochrome Style)
+        // Full Screen Slide-In History Drawer
         AnimatedVisibility(
             visible = showHistoryDrawer,
             enter = slideInHorizontally(initialOffsetX = { -it }) + fadeIn(),
