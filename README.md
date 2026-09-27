@@ -1,4 +1,4 @@
-# VerdictEdge 🦅
+# VerdictEdge 
 
 > **Air-Gapped, On-Device Legal Risk & Statutory Analyzer for Android**
 
