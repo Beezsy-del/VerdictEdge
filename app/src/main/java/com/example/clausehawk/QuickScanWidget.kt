@@ -6,7 +6,6 @@ import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
-import com.example.clausehawk.R
 
 class QuickScanWidget : AppWidgetProvider() {
 
@@ -19,14 +18,6 @@ class QuickScanWidget : AppWidgetProvider() {
             updateAppWidget(context, appWidgetManager, appWidgetId)
         }
     }
-
-    override fun onEnabled(context: Context) {
-        // Perform setup when the first widget is added to the home screen
-    }
-
-    override fun onDisabled(context: Context) {
-        // Clean up resources when the last widget instance is removed
-    }
 }
 
 internal fun updateAppWidget(
@@ -34,24 +25,34 @@ internal fun updateAppWidget(
     appWidgetManager: AppWidgetManager,
     appWidgetId: Int
 ) {
-    // Intent to open MainActivity when the widget action is triggered
-    val intent = Intent(context, MainActivity::class.java).apply {
-        action = "ACTION_QUICK_SCAN"
+    // Intent to launch Camera Scan action in MainActivity
+    val scanIntent = Intent(context, MainActivity::class.java).apply {
+        action = "com.example.clausehawk.ACTION_QUICK_SCAN"
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
     }
-
-    val pendingIntent = PendingIntent.getActivity(
+    val scanPendingIntent = PendingIntent.getActivity(
         context,
-        0,
-        intent,
+        101,
+        scanIntent,
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
-    // Inflate layout using the explicit project R reference
-    val views = RemoteViews(context.packageName, R.layout.widget_quick_scan)
+    // Intent to launch Document Upload action in MainActivity
+    val uploadIntent = Intent(context, MainActivity::class.java).apply {
+        action = "com.example.clausehawk.ACTION_UPLOAD_DOC"
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+    }
+    val uploadPendingIntent = PendingIntent.getActivity(
+        context,
+        102,
+        uploadIntent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
 
-    // Set the intent to trigger when clicking the scan button/view
-    views.setOnClickPendingIntent(R.id.btn_scan, pendingIntent)
+    val views = RemoteViews(context.packageName, R.layout.widget_quick_scan).apply {
+        setOnClickPendingIntent(R.id.btn_scan, scanPendingIntent)
+        setOnClickPendingIntent(R.id.btn_upload, uploadPendingIntent)
+    }
 
-    // Apply updates to the widget manager
     appWidgetManager.updateAppWidget(appWidgetId, views)
 }

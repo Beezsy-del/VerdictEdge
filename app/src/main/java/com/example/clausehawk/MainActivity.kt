@@ -17,18 +17,59 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -167,20 +208,51 @@ fun buildFullAudioSummary(result: AnalysisResult, lang: Language): String {
 
 class MainActivity : ComponentActivity() {
     private lateinit var voiceManager: VoiceManager
+    private var initialSharedText by mutableStateOf<String?>(null)
+    private var initialQuickScanAction by mutableStateOf(false)
+    private var initialUploadDocAction by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         voiceManager = VoiceManager(this)
 
+        handleIncomingIntent(intent)
+
         setContent {
             OfficialTheme {
                 ClauseHawkApp(
+                    initialText = initialSharedText,
+                    autoTriggerCamera = initialQuickScanAction,
+                    autoTriggerUpload = initialUploadDocAction,
+                    onResetQuickScan = { initialQuickScanAction = false },
+                    onResetUploadDoc = { initialUploadDocAction = false },
                     onSpeakText = { text, lang -> voiceManager.speak(text, lang) },
                     onStopAudio = { voiceManager.stop() },
                     onSelectVoiceEngine = { type -> voiceManager.setEngineType(type) },
                     onExportPdf = { result, contractText, lang -> generatePdfReport(this, result, contractText, lang) }
                 )
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIncomingIntent(intent)
+    }
+
+    private fun handleIncomingIntent(intent: Intent?) {
+        intent?.let {
+            if (it.action == Intent.ACTION_SEND && it.type == "text/plain") {
+                val text = it.getStringExtra(Intent.EXTRA_TEXT)
+                if (!text.isNullOrBlank()) {
+                    initialSharedText = text
+                }
+            } else if (it.action == "com.example.clausehawk.ACTION_QUICK_SCAN" || it.action == "ACTION_QUICK_SCAN" || it.getBooleanExtra("EXTRA_QUICK_SCAN", false)) {
+                initialQuickScanAction = true
+            } else if (it.action == "com.example.clausehawk.ACTION_UPLOAD_DOC" || it.action == "ACTION_UPLOAD_DOC" || it.getBooleanExtra("EXTRA_UPLOAD_DOC", false)) {
+                initialUploadDocAction = true
             }
         }
     }
@@ -193,6 +265,11 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun ClauseHawkApp(
+    initialText: String? = null,
+    autoTriggerCamera: Boolean = false,
+    autoTriggerUpload: Boolean = false,
+    onResetQuickScan: () -> Unit = {},
+    onResetUploadDoc: () -> Unit = {},
     onSpeakText: (String, Language) -> Unit,
     onStopAudio: () -> Unit,
     onSelectVoiceEngine: (VoiceEngineType) -> Unit,
@@ -204,7 +281,7 @@ fun ClauseHawkApp(
     val contractEngine = remember { ContractEngine() }
 
     var appState by remember { mutableStateOf(AppState.INIT_LOADING) }
-    var contractText by remember { mutableStateOf("") }
+    var contractText by remember { mutableStateOf(initialText ?: "") }
     var dealbreakerInput by remember { mutableStateOf("") }
     var analysisResult by remember { mutableStateOf<AnalysisResult?>(null) }
     var isOcrExtracting by remember { mutableStateOf(false) }
@@ -213,7 +290,6 @@ fun ClauseHawkApp(
     var isAudioPlaying by remember { mutableStateOf(false) }
     var selectedVoiceEngine by remember { mutableStateOf(VoiceEngineType.NEURAL_SHERPA) }
 
-    // Summary screen font size control state
     var summaryFontSize by remember { mutableStateOf(13) }
 
     var selectedDictWord by remember { mutableStateOf<Pair<String, String>?>(null) }
@@ -274,6 +350,27 @@ fun ClauseHawkApp(
         if (isGranted) launchFullResCamera() else Toast.makeText(context, "Camera permission required", Toast.LENGTH_SHORT).show()
     }
 
+    LaunchedEffect(initialText) {
+        if (!initialText.isNullOrBlank()) {
+            contractText = initialText
+        }
+    }
+
+    LaunchedEffect(autoTriggerCamera) {
+        if (autoTriggerCamera) {
+            val hasPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+            if (hasPermission) launchFullResCamera() else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            onResetQuickScan()
+        }
+    }
+
+    LaunchedEffect(autoTriggerUpload) {
+        if (autoTriggerUpload) {
+            multiFileLauncher.launch("*/*")
+            onResetUploadDoc()
+        }
+    }
+
     val loadHistoryRecords = {
         val prefs = context.getSharedPreferences("contract_history_store", Context.MODE_PRIVATE)
         val jsonStr = prefs.getString("history_json", "[]") ?: "[]"
@@ -324,7 +421,6 @@ fun ClauseHawkApp(
 
     Box(modifier = Modifier.fillMaxSize()) {
 
-        // Intercept system back gestures & hardware back button
         BackHandler(
             enabled = selectedDictWord != null || showHistoryDrawer || appState == AppState.RESULTS || appState == AppState.PROCESSING_LOADING
         ) {
@@ -503,7 +599,6 @@ fun ClauseHawkApp(
                             put("fullText", contractText)
                         }
 
-                        // Bound history to latest 20 items to prevent unbounded SharedPreferences inflation
                         val maxHistoryItems = 20
                         val boundedArray = JSONArray()
                         val startIndex = maxOf(0, array.length() - (maxHistoryItems - 1))
@@ -541,7 +636,6 @@ fun ClauseHawkApp(
                 mutableStateListOf(*result.preSigningChecklist.toTypedArray())
             }
 
-            // Dynamic Font Scalers for all summary & body elements
             val bodyFontSize = summaryFontSize.sp
             val captionFontSize = (summaryFontSize - 2).coerceAtLeast(9).sp
             val sectionHeaderFontSize = (summaryFontSize + 2).sp
@@ -678,7 +772,6 @@ fun ClauseHawkApp(
                                     )
                                 }
 
-                                // Global Font Size Controls (+ / - buttons)
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -1171,7 +1264,6 @@ fun ClauseHawkApp(
             }
         }
 
-        // Full Screen Slide-In History Drawer
         AnimatedVisibility(
             visible = showHistoryDrawer,
             enter = slideInHorizontally(initialOffsetX = { -it }) + fadeIn(),
@@ -1342,12 +1434,10 @@ private fun generatePdfReport(context: Context, result: AnalysisResult, text: St
         val paint = Paint().apply { isAntiAlias = true }
 
         fun drawPageBackground(canvas: Canvas, isFirstPage: Boolean) {
-            // Crisp White Document Paper Background
             paint.color = android.graphics.Color.WHITE
             canvas.drawRect(0f, 0f, 595f, 842f, paint)
 
             if (isFirstPage) {
-                // Professional Dark Header Banner
                 val headerPaint = Paint().apply { color = android.graphics.Color.parseColor("#111827") }
                 canvas.drawRect(0f, 0f, 595f, 85f, headerPaint)
 
@@ -1364,7 +1454,6 @@ private fun generatePdfReport(context: Context, result: AnalysisResult, text: St
                 paint.color = android.graphics.Color.parseColor("#9CA3AF")
                 canvas.drawText("Air-gapped Local Legal Intelligence Engine", 36f, 66f, paint)
             } else {
-                // Top header bar on subsequent pages
                 val linePaint = Paint().apply { color = android.graphics.Color.parseColor("#E5E7EB") }
                 canvas.drawLine(36f, 40f, 559f, 40f, linePaint)
                 paint.textSize = 8f
@@ -1373,7 +1462,6 @@ private fun generatePdfReport(context: Context, result: AnalysisResult, text: St
                 canvas.drawText("VerdictEdge Analysis Report (Continued)", 36f, 32f, paint)
             }
 
-            // Bottom Footer
             val footerLinePaint = Paint().apply { color = android.graphics.Color.parseColor("#E5E7EB") }
             canvas.drawLine(36f, 800f, 559f, 800f, footerLinePaint)
 
@@ -1399,7 +1487,6 @@ private fun generatePdfReport(context: Context, result: AnalysisResult, text: St
             }
         }
 
-        // Overall Risk Assessment Card Box
         checkPageOverflow(55f)
         val cardBgPaint = Paint().apply { color = android.graphics.Color.parseColor("#F9FAFB") }
         val cardBorderPaint = Paint().apply {
@@ -1432,7 +1519,6 @@ private fun generatePdfReport(context: Context, result: AnalysisResult, text: St
 
         yPos += 70f
 
-        // Statutory Warnings
         if (result.statutoryVoidabilities.isNotEmpty()) {
             checkPageOverflow(30f)
             paint.isFakeBoldText = true
@@ -1463,7 +1549,6 @@ private fun generatePdfReport(context: Context, result: AnalysisResult, text: St
             yPos += 10f
         }
 
-        // Vulnerabilities & Counter-Offers
         if (result.clauseBreakdowns.isNotEmpty()) {
             checkPageOverflow(30f)
             paint.isFakeBoldText = true
@@ -1496,7 +1581,6 @@ private fun generatePdfReport(context: Context, result: AnalysisResult, text: St
             yPos += 10f
         }
 
-        // Financial Exposure
         if (result.financialExposures.isNotEmpty()) {
             checkPageOverflow(30f)
             paint.isFakeBoldText = true
@@ -1520,7 +1604,6 @@ private fun generatePdfReport(context: Context, result: AnalysisResult, text: St
             yPos += 10f
         }
 
-        // Key Deadlines
         if (result.deadlines.isNotEmpty()) {
             checkPageOverflow(30f)
             paint.isFakeBoldText = true
@@ -1544,7 +1627,6 @@ private fun generatePdfReport(context: Context, result: AnalysisResult, text: St
             yPos += 10f
         }
 
-        // Checklist
         if (result.preSigningChecklist.isNotEmpty()) {
             checkPageOverflow(30f)
             paint.isFakeBoldText = true
