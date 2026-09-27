@@ -13,6 +13,7 @@ import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -322,6 +323,31 @@ fun ClauseHawkApp(
 
     Box(modifier = Modifier.fillMaxSize()) {
 
+        // Intercept system back gestures & hardware back button
+        BackHandler(
+            enabled = selectedDictWord != null || showHistoryDrawer || appState == AppState.RESULTS || appState == AppState.PROCESSING_LOADING
+        ) {
+            when {
+                selectedDictWord != null -> {
+                    selectedDictWord = null
+                }
+                showHistoryDrawer -> {
+                    showHistoryDrawer = false
+                }
+                appState == AppState.RESULTS -> {
+                    if (isAudioPlaying) {
+                        onStopAudio()
+                        isAudioPlaying = false
+                    }
+                    appState = AppState.INPUT
+                }
+                appState == AppState.PROCESSING_LOADING -> {
+                    isOcrExtracting = false
+                    appState = AppState.INPUT
+                }
+            }
+        }
+
         if (appState == AppState.INPUT) {
             Surface(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding(), color = Color(0xFF000000)) {
                 Column(
@@ -523,16 +549,42 @@ fun ClauseHawkApp(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = when (selectedLanguage) {
-                                Language.ENGLISH -> "Analysis Report"
-                                Language.HINDI -> "विश्लेषण रिपोर्ट"
-                                Language.KANNADA -> "ವಿಶ್ಲೇಷಣೆ ವರದಿ"
-                            },
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    if (isAudioPlaying) {
+                                        onStopAudio()
+                                        isAudioPlaying = false
+                                    }
+                                    appState = AppState.INPUT
+                                },
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF181818))
+                                    .border(1.dp, Color(0xFF333333), CircleShape)
+                            ) {
+                                Text(
+                                    text = "←",
+                                    color = Color.White,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = when (selectedLanguage) {
+                                    Language.ENGLISH -> "Analysis Report"
+                                    Language.HINDI -> "विश्लेषण रिपोर्ट"
+                                    Language.KANNADA -> "ವಿಶ್ಲೇಷಣೆ ವರದಿ"
+                                },
+                                fontSize = 23.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
 
                         Button(
                             onClick = { onExportPdf(result, contractText, selectedLanguage) },
@@ -1061,6 +1113,10 @@ fun ClauseHawkApp(
 
                     Button(
                         onClick = {
+                            if (isAudioPlaying) {
+                                onStopAudio()
+                                isAudioPlaying = false
+                            }
                             contractText = ""
                             analysisResult = null
                             appState = AppState.INPUT
