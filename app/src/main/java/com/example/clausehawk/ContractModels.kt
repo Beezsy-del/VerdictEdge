@@ -46,10 +46,10 @@ enum class RiskLevel(
 
 val RiskLevel.color: Color
     get() = when (this) {
-        RiskLevel.HIGH -> Color(0xFFEF4444)
-        RiskLevel.MEDIUM -> Color(0xFFF59E0B)
-        RiskLevel.LOW -> Color(0xFF10B981)
-        RiskLevel.INVALID -> Color(0xFF6B7280)
+        RiskLevel.HIGH -> Color(0xFF991B1B)
+        RiskLevel.MEDIUM -> Color(0xFFB45309)
+        RiskLevel.LOW -> Color(0xFF15803D)
+        RiskLevel.INVALID -> Color(0xFF78716C)
     }
 
 data class RedFlag(

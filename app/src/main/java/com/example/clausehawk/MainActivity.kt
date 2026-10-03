@@ -61,6 +61,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.ui.text.font.FontFamily
+import com.example.clausehawk.ui.theme.WarmTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -404,17 +407,17 @@ fun ClauseHawkApp(
             appState = AppState.INPUT
         }
 
-        Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFF000000)) {
+        Surface(modifier = Modifier.fillMaxSize(), color = WarmTheme.Background) {
             Column(
                 modifier = Modifier.fillMaxSize().padding(32.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                CircularProgressIndicator(modifier = Modifier.size(42.dp), color = Color.White, strokeWidth = 3.dp)
+                CircularProgressIndicator(modifier = Modifier.size(42.dp), color = WarmTheme.Primary, strokeWidth = 3.dp)
                 Spacer(modifier = Modifier.height(28.dp))
-                Text(text = "VerdictEdge Neural Engine", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(text = "VerdictEdge Neural Engine", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = WarmTheme.TextPrimary, fontFamily = FontFamily.Serif)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Air-gapped local legal environment ready", fontSize = 13.sp, color = Color(0xFFA0A0A0))
+                Text(text = "Air-gapped local legal environment ready", fontSize = 13.sp, color = WarmTheme.TextSecondary)
             }
         }
     }
@@ -446,7 +449,7 @@ fun ClauseHawkApp(
         }
 
         if (appState == AppState.INPUT) {
-            Surface(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding(), color = Color(0xFF000000)) {
+            Surface(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding(), color = WarmTheme.Background) {
                 Column(
                     modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 16.dp).verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.SpaceBetween
@@ -461,16 +464,16 @@ fun ClauseHawkApp(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(50.dp))
-                                    .background(Color(0xFF141414))
-                                    .border(1.dp, Color(0xFF333333), RoundedCornerShape(50.dp))
+                                    .background(WarmTheme.SurfaceAlt)
+                                    .border(1.dp, WarmTheme.Border, RoundedCornerShape(50.dp))
                                     .padding(horizontal = 12.dp, vertical = 6.dp)
                             ) {
-                                Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color.White))
+                                Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(WarmTheme.Primary))
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = if (isOcrExtracting) processingProgress else "Local Engine Active",
                                     fontSize = 11.sp,
-                                    color = Color.White,
+                                    color = WarmTheme.TextPrimary,
                                     fontWeight = FontWeight.Medium
                                 )
                             }
@@ -480,34 +483,34 @@ fun ClauseHawkApp(
                                     loadHistoryRecords()
                                     showHistoryDrawer = true
                                 },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF141414)),
-                                border = BorderStroke(1.dp, Color(0xFF333333)),
+                                colors = ButtonDefaults.buttonColors(containerColor = WarmTheme.Surface),
+                                border = BorderStroke(1.dp, WarmTheme.Border),
                                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
                                 shape = RoundedCornerShape(10.dp)
                             ) {
-                                Text("🕒 History", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.SemiBold)
+                                Text("🕒 History", fontSize = 12.sp, color = WarmTheme.TextPrimary, fontWeight = FontWeight.SemiBold)
                             }
                         }
 
                         Spacer(modifier = Modifier.height(20.dp))
-                        Text(text = "VerdictEdge", fontSize = 36.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
-                        Text(text = "Multi-file Legal Risk & Statutory Analyzer", fontSize = 13.sp, color = Color(0xFFA0A0A0))
+                        Text(text = "VerdictEdge", fontSize = 36.sp, fontWeight = FontWeight.Bold, color = WarmTheme.TextPrimary, fontFamily = FontFamily.Serif)
+                        Text(text = "Multi-file Legal Risk & Statutory Analyzer", fontSize = 13.sp, color = WarmTheme.TextSecondary)
 
                         Spacer(modifier = Modifier.height(18.dp))
 
                         OutlinedTextField(
                             value = contractText,
                             onValueChange = { contractText = it },
-                            placeholder = { Text("Paste contract text or scan legal documents...", color = Color(0xFF666666), fontSize = 14.sp) },
+                            placeholder = { Text("Paste contract text or scan legal documents...", color = WarmTheme.TextMuted, fontSize = 14.sp) },
                             modifier = Modifier.fillMaxWidth().height(170.dp),
-                            shape = RoundedCornerShape(16.dp),
+                            shape = RoundedCornerShape(14.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = Color(0xFF121212),
-                                unfocusedContainerColor = Color(0xFF0A0A0A),
-                                focusedBorderColor = Color.White,
-                                unfocusedBorderColor = Color(0xFF2A2A2A),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
+                                focusedContainerColor = WarmTheme.Surface,
+                                unfocusedContainerColor = WarmTheme.Surface,
+                                focusedBorderColor = WarmTheme.Primary,
+                                unfocusedBorderColor = WarmTheme.Border,
+                                focusedTextColor = WarmTheme.TextPrimary,
+                                unfocusedTextColor = WarmTheme.TextPrimary
                             )
                         )
 
@@ -516,16 +519,16 @@ fun ClauseHawkApp(
                         OutlinedTextField(
                             value = dealbreakerInput,
                             onValueChange = { dealbreakerInput = it },
-                            placeholder = { Text("Set Dealbreaker Rules (e.g. non-compete, 60 days notice)", color = Color(0xFF666666), fontSize = 12.sp) },
+                            placeholder = { Text("Set Dealbreaker Rules (e.g. non-compete, 60 days notice)", color = WarmTheme.TextMuted, fontSize = 12.sp) },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = Color(0xFF121212),
-                                unfocusedContainerColor = Color(0xFF0A0A0A),
-                                focusedBorderColor = Color.White,
-                                unfocusedBorderColor = Color(0xFF2A2A2A),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
+                                focusedContainerColor = WarmTheme.Surface,
+                                unfocusedContainerColor = WarmTheme.Surface,
+                                focusedBorderColor = WarmTheme.Primary,
+                                unfocusedBorderColor = WarmTheme.Border,
+                                focusedTextColor = WarmTheme.TextPrimary,
+                                unfocusedTextColor = WarmTheme.TextPrimary
                             )
                         )
 
@@ -539,20 +542,20 @@ fun ClauseHawkApp(
                                 },
                                 modifier = Modifier.weight(1f).height(48.dp),
                                 shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF141414), contentColor = Color.White),
-                                border = BorderStroke(1.dp, Color(0xFF333333))
+                                colors = ButtonDefaults.buttonColors(containerColor = WarmTheme.Surface, contentColor = WarmTheme.TextPrimary),
+                                border = BorderStroke(1.dp, WarmTheme.Border)
                             ) {
-                                Text(text = "📷 Camera", fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                                Text(text = "📷 Camera", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = WarmTheme.TextPrimary)
                             }
 
                             Button(
                                 onClick = { multiFileLauncher.launch("*/*") },
                                 modifier = Modifier.weight(1f).height(48.dp),
                                 shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF141414), contentColor = Color.White),
-                                border = BorderStroke(1.dp, Color(0xFF333333))
+                                colors = ButtonDefaults.buttonColors(containerColor = WarmTheme.Surface, contentColor = WarmTheme.TextPrimary),
+                                border = BorderStroke(1.dp, WarmTheme.Border)
                             ) {
-                                Text(text = "📂 Scan Files/PDFs", fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                                Text(text = "📂 Scan Files/PDFs", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = WarmTheme.TextPrimary)
                             }
                         }
                     }
@@ -568,9 +571,9 @@ fun ClauseHawkApp(
                         enabled = contractText.isNotBlank() && !isOcrExtracting,
                         modifier = Modifier.fillMaxWidth().height(52.dp),
                         shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
+                        colors = ButtonDefaults.buttonColors(containerColor = WarmTheme.Primary, contentColor = Color.White)
                     ) {
-                        Text(text = "Analyze Contract Risk", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                        Text(text = "Analyze Contract Risk", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White, fontFamily = FontFamily.Serif)
                     }
                 }
             }
@@ -613,17 +616,17 @@ fun ClauseHawkApp(
                 }
             }
 
-            Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFF000000)) {
+            Surface(modifier = Modifier.fillMaxSize(), color = WarmTheme.Background) {
                 Column(
                     modifier = Modifier.fillMaxSize().padding(32.dp),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    CircularProgressIndicator(modifier = Modifier.size(44.dp), color = Color.White, strokeWidth = 3.5.dp)
+                    CircularProgressIndicator(modifier = Modifier.size(44.dp), color = WarmTheme.Primary, strokeWidth = 3.5.dp)
                     Spacer(modifier = Modifier.height(28.dp))
-                    Text(text = "Evaluating Statutory & Risk Rules...", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(text = "Evaluating Statutory & Risk Rules...", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = WarmTheme.TextPrimary, fontFamily = FontFamily.Serif)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = "Analyzing Discretions, Financial Exposures & Counter-Clauses", fontSize = 12.sp, color = Color(0xFFA0A0A0))
+                    Text(text = "Analyzing Discretions, Financial Exposures & Counter-Clauses", fontSize = 12.sp, color = WarmTheme.TextSecondary)
                 }
             }
         }
@@ -641,7 +644,7 @@ fun ClauseHawkApp(
             val sectionHeaderFontSize = (summaryFontSize + 2).sp
             val lineSpacing = (summaryFontSize + 4).sp
 
-            Surface(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding(), color = Color(0xFF000000)) {
+            Surface(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding(), color = WarmTheme.Background) {
                 Column(
                     modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 14.dp).verticalScroll(scrollState)
                 ) {
@@ -662,12 +665,12 @@ fun ClauseHawkApp(
                                 modifier = Modifier
                                     .size(38.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFF181818))
-                                    .border(1.dp, Color(0xFF333333), CircleShape)
+                                    .background(WarmTheme.Surface)
+                                    .border(1.dp, WarmTheme.Border, CircleShape)
                             ) {
                                 Text(
                                     text = "←",
-                                    color = Color.White,
+                                    color = WarmTheme.TextPrimary,
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -681,14 +684,15 @@ fun ClauseHawkApp(
                                 },
                                 fontSize = 23.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = WarmTheme.TextPrimary,
+                                fontFamily = FontFamily.Serif
                             )
                         }
 
                         Button(
                             onClick = { onExportPdf(result, contractText, selectedLanguage) },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E1E1E)),
-                            border = BorderStroke(1.dp, Color(0xFF404040)),
+                            colors = ButtonDefaults.buttonColors(containerColor = WarmTheme.Surface),
+                            border = BorderStroke(1.dp, WarmTheme.Border),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                             shape = RoundedCornerShape(10.dp)
                         ) {
@@ -699,7 +703,7 @@ fun ClauseHawkApp(
                                     Language.KANNADA -> "📄 PDF ರಫ್ತು"
                                 },
                                 fontSize = 12.sp,
-                                color = Color.White,
+                                color = WarmTheme.TextPrimary,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -711,8 +715,8 @@ fun ClauseHawkApp(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFF121212))
-                            .border(1.dp, Color(0xFF2A2A2A), RoundedCornerShape(12.dp))
+                            .background(WarmTheme.SurfaceAlt)
+                            .border(1.dp, WarmTheme.Border, RoundedCornerShape(12.dp))
                             .padding(4.dp)
                     ) {
                         Language.values().forEach { lang ->
@@ -721,7 +725,7 @@ fun ClauseHawkApp(
                                 modifier = Modifier
                                     .weight(1f)
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(if (isSelected) Color.White else Color.Transparent)
+                                    .background(if (isSelected) WarmTheme.Surface else Color.Transparent)
                                     .clickable {
                                         if (selectedLanguage != lang) {
                                             if (isAudioPlaying) {
@@ -738,7 +742,7 @@ fun ClauseHawkApp(
                                     text = when (lang) { Language.ENGLISH -> "English" ; Language.HINDI -> "हिंदी" ; Language.KANNADA -> "ಕನ್ನಡ" },
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isSelected) Color.Black else Color(0xFFA0A0A0)
+                                    color = if (isSelected) WarmTheme.Primary else WarmTheme.TextSecondary
                                 )
                             }
                         }
@@ -747,9 +751,9 @@ fun ClauseHawkApp(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Card(
-                        modifier = Modifier.fillMaxWidth().border(1.dp, Color(0xFF333333), RoundedCornerShape(16.dp)),
+                        modifier = Modifier.fillMaxWidth().border(1.dp, WarmTheme.Border, RoundedCornerShape(16.dp)),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF121212))
+                        colors = CardDefaults.cardColors(containerColor = WarmTheme.Surface)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(
@@ -768,7 +772,8 @@ fun ClauseHawkApp(
                                         },
                                         fontSize = (summaryFontSize + 5).sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color.White
+                                        color = WarmTheme.TextPrimary,
+                                        fontFamily = FontFamily.Serif
                                     )
                                 }
 
@@ -778,24 +783,24 @@ fun ClauseHawkApp(
                                 ) {
                                     Button(
                                         onClick = { if (summaryFontSize > 9) summaryFontSize-- },
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF222222)),
-                                        border = BorderStroke(1.dp, Color(0xFF444444)),
+                                        colors = ButtonDefaults.buttonColors(containerColor = WarmTheme.Surface),
+                                        border = BorderStroke(1.dp, WarmTheme.Border),
                                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
                                         shape = RoundedCornerShape(6.dp),
                                         modifier = Modifier.height(28.dp)
                                     ) {
-                                        Text("A-", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                        Text("A-", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = WarmTheme.TextPrimary)
                                     }
 
                                     Button(
                                         onClick = { if (summaryFontSize < 24) summaryFontSize++ },
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF222222)),
-                                        border = BorderStroke(1.dp, Color(0xFF444444)),
+                                        colors = ButtonDefaults.buttonColors(containerColor = WarmTheme.Surface),
+                                        border = BorderStroke(1.dp, WarmTheme.Border),
                                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
                                         shape = RoundedCornerShape(6.dp),
                                         modifier = Modifier.height(28.dp)
                                     ) {
-                                        Text("A+", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                        Text("A+", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = WarmTheme.TextPrimary)
                                     }
                                 }
                             }
@@ -808,15 +813,15 @@ fun ClauseHawkApp(
                                 },
                                 fontSize = bodyFontSize,
                                 lineHeight = lineSpacing,
-                                color = Color(0xFFCCCCCC)
+                                color = WarmTheme.TextSecondary
                             )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
                     Card(
-                        modifier = Modifier.fillMaxWidth().border(1.dp, Color(0xFF333333), RoundedCornerShape(12.dp)),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF121212))
+                        modifier = Modifier.fillMaxWidth().border(1.dp, WarmTheme.Border, RoundedCornerShape(12.dp)),
+                        colors = CardDefaults.cardColors(containerColor = WarmTheme.Surface)
                     ) {
                         Column(modifier = Modifier.padding(12.dp).fillMaxWidth()) {
                             Row(
@@ -831,7 +836,7 @@ fun ClauseHawkApp(
                                             Language.HINDI -> "🔊 सरल भाषा ऑडियो सारांश"
                                             Language.KANNADA -> "🔊 ಸರಳ ಭಾಷೆಯ ಧ್ವನಿ ಸಾರಾಂಶ"
                                         },
-                                        fontSize = bodyFontSize, fontWeight = FontWeight.Bold, color = Color.White
+                                        fontSize = bodyFontSize, fontWeight = FontWeight.Bold, color = WarmTheme.TextPrimary
                                     )
                                     Text(
                                         text = when (selectedLanguage) {
@@ -839,7 +844,7 @@ fun ClauseHawkApp(
                                             Language.HINDI -> "पूर्ण बोली जाने वाली जोखिम रिपोर्ट सुनें"
                                             Language.KANNADA -> "ಸಂಪೂರ್ಣ ಧ್ವನಿ ವರದಿಯನ್ನು ಆಲಿಸಿ"
                                         },
-                                        fontSize = captionFontSize, color = Color(0xFFA0A0A0)
+                                        fontSize = captionFontSize, color = WarmTheme.TextSecondary
                                     )
                                 }
                                 Button(
@@ -853,7 +858,7 @@ fun ClauseHawkApp(
                                             isAudioPlaying = true
                                         }
                                     },
-                                    colors = ButtonDefaults.buttonColors(containerColor = if (isAudioPlaying) Color(0xFF333333) else Color.White),
+                                    colors = ButtonDefaults.buttonColors(containerColor = if (isAudioPlaying) WarmTheme.Danger else WarmTheme.Primary),
                                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
@@ -863,7 +868,7 @@ fun ClauseHawkApp(
                                         } else {
                                             when (selectedLanguage) { Language.ENGLISH -> "Play"; Language.HINDI -> "चलाएं"; Language.KANNADA -> "ಪ್ಲೇ" }
                                         },
-                                        fontSize = 12.sp, color = if (isAudioPlaying) Color.White else Color.Black, fontWeight = FontWeight.Bold
+                                        fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold
                                     )
                                 }
                             }
@@ -872,7 +877,7 @@ fun ClauseHawkApp(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color(0xFF1E1E1E), RoundedCornerShape(8.dp))
+                                    .background(WarmTheme.SurfaceAlt, RoundedCornerShape(8.dp))
                                     .padding(horizontal = 10.dp, vertical = 6.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
@@ -881,7 +886,7 @@ fun ClauseHawkApp(
                                     Text(
                                         text = "Voice: ",
                                         fontSize = 11.sp,
-                                        color = Color(0xFF888888)
+                                        color = WarmTheme.TextMuted
                                     )
                                     Text(
                                         text = when (selectedLanguage) {
@@ -935,34 +940,34 @@ fun ClauseHawkApp(
                                 Language.HINDI -> "⚖️ वैधानिक अमान्यता चेतावनी (भारतीय कानून)"
                                 Language.KANNADA -> "⚖️ ಶಾಸನಬದ್ಧ ಅಮಾನ್ಯತೆಯ ಎಚ್ಚರಿಕೆಗಳು (ಭಾರತೀಯ ಕಾನೂನು)"
                             },
-                            fontSize = sectionHeaderFontSize, fontWeight = FontWeight.Bold, color = Color.White
+                            fontSize = sectionHeaderFontSize, fontWeight = FontWeight.Bold, color = WarmTheme.TextPrimary, fontFamily = FontFamily.Serif
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         result.statutoryVoidabilities.forEach { stat ->
                             Card(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).border(1.dp, Color(0xFF444444), RoundedCornerShape(12.dp)),
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFF181818))
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).border(1.dp, WarmTheme.DangerBorder, RoundedCornerShape(12.dp)),
+                                colors = CardDefaults.cardColors(containerColor = WarmTheme.DangerBg)
                             ) {
                                 Column(modifier = Modifier.padding(12.dp)) {
                                     Text(
                                         text = "${stat.actSection}: ${when (selectedLanguage) { Language.ENGLISH -> stat.titleEn; Language.HINDI -> stat.titleHi; Language.KANNADA -> stat.titleKn }}",
-                                        fontSize = bodyFontSize, fontWeight = FontWeight.Bold, color = Color.White
+                                        fontSize = bodyFontSize, fontWeight = FontWeight.Bold, color = WarmTheme.Danger, fontFamily = FontFamily.Serif
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
                                         text = when (selectedLanguage) { Language.ENGLISH -> stat.legalReasonEn; Language.HINDI -> stat.legalReasonHi; Language.KANNADA -> stat.legalReasonKn },
-                                        fontSize = bodyFontSize, lineHeight = lineSpacing, color = Color(0xFFCCCCCC)
+                                        fontSize = bodyFontSize, lineHeight = lineSpacing, color = WarmTheme.TextPrimary
                                     )
                                     if (stat.quoteSnippet.isNotBlank()) {
                                         Spacer(modifier = Modifier.height(6.dp))
                                         Surface(
-                                            color = Color(0xFF0A0A0A),
+                                            color = WarmTheme.Surface,
                                             shape = RoundedCornerShape(6.dp),
-                                            modifier = Modifier.fillMaxWidth().border(1.dp, Color(0xFF2A2A2A), RoundedCornerShape(6.dp))
+                                            modifier = Modifier.fillMaxWidth().border(1.dp, WarmTheme.Border, RoundedCornerShape(6.dp))
                                         ) {
                                             Text(
                                                 text = "“Quoted Clause: ${stat.quoteSnippet}”",
-                                                fontSize = captionFontSize, color = Color(0xFFA0A0A0), modifier = Modifier.padding(8.dp), lineHeight = lineSpacing
+                                                fontSize = captionFontSize, color = WarmTheme.TextSecondary, modifier = Modifier.padding(8.dp), lineHeight = lineSpacing
                                             )
                                         }
                                     }
@@ -979,39 +984,39 @@ fun ClauseHawkApp(
                                 Language.HINDI -> "💡 कमियां और जवाबी प्रस्ताव मार्गदर्शन"
                                 Language.KANNADA -> "💡 ಲೋಪದೋಷಗಳು ಮತ್ತು ಪ್ರತಿಸಲ್ಲಿಕೆ ಮಾರ್ಗದರ್ಶನ"
                             },
-                            fontSize = sectionHeaderFontSize, fontWeight = FontWeight.Bold, color = Color.White
+                            fontSize = sectionHeaderFontSize, fontWeight = FontWeight.Bold, color = WarmTheme.TextPrimary, fontFamily = FontFamily.Serif
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         result.clauseBreakdowns.forEach { cb ->
                             Card(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).border(1.dp, Color(0xFF333333), RoundedCornerShape(12.dp)),
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFF121212))
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).border(1.dp, WarmTheme.Border, RoundedCornerShape(12.dp)),
+                                colors = CardDefaults.cardColors(containerColor = WarmTheme.Surface)
                             ) {
                                 Column(modifier = Modifier.padding(12.dp)) {
                                     if (cb.originalSnippet.isNotBlank()) {
                                         Surface(
-                                            color = Color(0xFF0A0A0A), shape = RoundedCornerShape(6.dp),
-                                            modifier = Modifier.fillMaxWidth().border(1.dp, Color(0xFF2A2A2A), RoundedCornerShape(6.dp))
+                                            color = WarmTheme.SurfaceSubtle, shape = RoundedCornerShape(6.dp),
+                                            modifier = Modifier.fillMaxWidth().border(1.dp, WarmTheme.Border, RoundedCornerShape(6.dp))
                                         ) {
-                                            Text(text = "“Quoted Clause: ${cb.originalSnippet}”", fontSize = captionFontSize, color = Color(0xFFCCCCCC), modifier = Modifier.padding(8.dp), lineHeight = lineSpacing)
+                                            Text(text = "“Quoted Clause: ${cb.originalSnippet}”", fontSize = captionFontSize, color = WarmTheme.TextSecondary, modifier = Modifier.padding(8.dp), lineHeight = lineSpacing)
                                         }
                                         Spacer(modifier = Modifier.height(6.dp))
                                     }
                                     Text(
                                         text = "⚠️ Problem: " + when (selectedLanguage) { Language.ENGLISH -> cb.problemEn; Language.HINDI -> cb.problemHi; Language.KANNADA -> cb.problemKn },
-                                        fontSize = bodyFontSize, lineHeight = lineSpacing, color = Color(0xFFE5E5E5)
+                                        fontSize = bodyFontSize, lineHeight = lineSpacing, color = WarmTheme.Danger
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
                                         text = "✅ Solution: " + when (selectedLanguage) { Language.ENGLISH -> cb.solutionEn; Language.HINDI -> cb.solutionHi; Language.KANNADA -> cb.solutionKn },
-                                        fontSize = bodyFontSize, lineHeight = lineSpacing, color = Color.White
+                                        fontSize = bodyFontSize, lineHeight = lineSpacing, color = WarmTheme.Success
                                     )
                                     Spacer(modifier = Modifier.height(6.dp))
                                     Surface(
-                                        color = Color(0xFF1C1C1C), shape = RoundedCornerShape(6.dp),
-                                        modifier = Modifier.fillMaxWidth().border(1.dp, Color(0xFF404040), RoundedCornerShape(6.dp))
+                                        color = WarmTheme.SurfaceAlt, shape = RoundedCornerShape(6.dp),
+                                        modifier = Modifier.fillMaxWidth().border(1.dp, WarmTheme.Border, RoundedCornerShape(6.dp))
                                     ) {
-                                        Text(text = "🔄 ${cb.counterOfferDraft}", fontSize = bodyFontSize, color = Color.White, fontWeight = FontWeight.Medium, modifier = Modifier.padding(8.dp), lineHeight = lineSpacing)
+                                        Text(text = "🔄 ${cb.counterOfferDraft}", fontSize = bodyFontSize, color = WarmTheme.TextPrimary, fontWeight = FontWeight.Medium, modifier = Modifier.padding(8.dp), lineHeight = lineSpacing)
                                     }
                                 }
                             }
@@ -1026,35 +1031,35 @@ fun ClauseHawkApp(
                                 Language.HINDI -> "⏰ प्रमुख समय सीमाएं और दायित्व"
                                 Language.KANNADA -> "⏰ ಪ್ರಮುಖ ಗಡುವುಗಳು ಮತ್ತು ಜವಾಬ್ದಾರಿಗಳು"
                             },
-                            fontSize = sectionHeaderFontSize, fontWeight = FontWeight.Bold, color = Color.White
+                            fontSize = sectionHeaderFontSize, fontWeight = FontWeight.Bold, color = WarmTheme.TextPrimary, fontFamily = FontFamily.Serif
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         result.deadlines.forEach { deadline ->
                             Card(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).border(1.dp, Color(0xFF333333), RoundedCornerShape(12.dp)),
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFF121212))
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).border(1.dp, WarmTheme.Border, RoundedCornerShape(12.dp)),
+                                colors = CardDefaults.cardColors(containerColor = WarmTheme.Surface)
                             ) {
                                 Column(modifier = Modifier.padding(12.dp)) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Surface(
-                                            color = Color(0xFF262626),
+                                            color = WarmTheme.SurfaceAlt,
                                             shape = RoundedCornerShape(8.dp),
                                             modifier = Modifier.padding(end = 12.dp)
                                         ) {
-                                            Text(deadline.timeframe, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), fontSize = bodyFontSize, color = Color.White, fontWeight = FontWeight.Bold)
+                                            Text(deadline.timeframe, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), fontSize = bodyFontSize, color = WarmTheme.Primary, fontWeight = FontWeight.Bold)
                                         }
                                         Text(
                                             text = when (selectedLanguage) { Language.ENGLISH -> deadline.obligationEn; Language.HINDI -> deadline.obligationHi; Language.KANNADA -> deadline.obligationKn },
-                                            fontSize = bodyFontSize, color = Color(0xFFE2E8F0)
+                                            fontSize = bodyFontSize, color = WarmTheme.TextPrimary
                                         )
                                     }
                                     if (deadline.quoteSnippet.isNotBlank()) {
                                         Spacer(modifier = Modifier.height(6.dp))
                                         Surface(
-                                            color = Color(0xFF0A0A0A), shape = RoundedCornerShape(6.dp),
-                                            modifier = Modifier.fillMaxWidth().border(1.dp, Color(0xFF2A2A2A), RoundedCornerShape(6.dp))
+                                            color = WarmTheme.SurfaceSubtle, shape = RoundedCornerShape(6.dp),
+                                            modifier = Modifier.fillMaxWidth().border(1.dp, WarmTheme.Border, RoundedCornerShape(6.dp))
                                         ) {
-                                            Text(text = "“Quoted Clause: ${deadline.quoteSnippet}”", fontSize = captionFontSize, color = Color(0xFFCCCCCC), modifier = Modifier.padding(8.dp), lineHeight = lineSpacing)
+                                            Text(text = "“Quoted Clause: ${deadline.quoteSnippet}”", fontSize = captionFontSize, color = WarmTheme.TextSecondary, modifier = Modifier.padding(8.dp), lineHeight = lineSpacing)
                                         }
                                     }
                                 }
@@ -1070,13 +1075,13 @@ fun ClauseHawkApp(
                                 Language.HINDI -> "💰 वित्तीय जोखिम और छिपी लागतें"
                                 Language.KANNADA -> "💰 ಹಣಕಾಸು ಅಪಾಯ ಮತ್ತು ಗುಪ್ತ ವೆಚ್ಚಗಳು"
                             },
-                            fontSize = sectionHeaderFontSize, fontWeight = FontWeight.Bold, color = Color.White
+                            fontSize = sectionHeaderFontSize, fontWeight = FontWeight.Bold, color = WarmTheme.TextPrimary, fontFamily = FontFamily.Serif
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         result.financialExposures.forEach { fin ->
                             Card(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).border(1.dp, Color(0xFF333333), RoundedCornerShape(12.dp)),
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFF121212))
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).border(1.dp, WarmTheme.Border, RoundedCornerShape(12.dp)),
+                                colors = CardDefaults.cardColors(containerColor = WarmTheme.Surface)
                             ) {
                                 Column(modifier = Modifier.padding(12.dp)) {
                                     Row(
@@ -1114,10 +1119,10 @@ fun ClauseHawkApp(
                                     if (fin.quoteSnippet.isNotBlank()) {
                                         Spacer(modifier = Modifier.height(6.dp))
                                         Surface(
-                                            color = Color(0xFF0A0A0A), shape = RoundedCornerShape(6.dp),
-                                            modifier = Modifier.fillMaxWidth().border(1.dp, Color(0xFF2A2A2A), RoundedCornerShape(6.dp))
+                                            color = WarmTheme.SurfaceSubtle, shape = RoundedCornerShape(6.dp),
+                                            modifier = Modifier.fillMaxWidth().border(1.dp, WarmTheme.Border, RoundedCornerShape(6.dp))
                                         ) {
-                                            Text(text = "“Quoted Clause: ${fin.quoteSnippet}”", fontSize = captionFontSize, color = Color(0xFFCCCCCC), modifier = Modifier.padding(8.dp), lineHeight = lineSpacing)
+                                            Text(text = "“Quoted Clause: ${fin.quoteSnippet}”", fontSize = captionFontSize, color = WarmTheme.TextSecondary, modifier = Modifier.padding(8.dp), lineHeight = lineSpacing)
                                         }
                                     }
                                 }
@@ -1133,13 +1138,13 @@ fun ClauseHawkApp(
                                 Language.HINDI -> "🔍 अस्पष्टता और विवेक डिटेक्टर"
                                 Language.KANNADA -> "🔍 ಅಸ್ಪಷ್ಟತೆ ಮತ್ತು ವಿವೇಚನೆ ಪತ್ತೆ"
                             },
-                            fontSize = sectionHeaderFontSize, fontWeight = FontWeight.Bold, color = Color.White
+                            fontSize = sectionHeaderFontSize, fontWeight = FontWeight.Bold, color = WarmTheme.TextPrimary, fontFamily = FontFamily.Serif
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         result.ambiguities.forEach { amb ->
                             Card(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).border(1.dp, Color(0xFF333333), RoundedCornerShape(12.dp)),
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFF121212))
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).border(1.dp, WarmTheme.Border, RoundedCornerShape(12.dp)),
+                                colors = CardDefaults.cardColors(containerColor = WarmTheme.Surface)
                             ) {
                                 Column(modifier = Modifier.padding(12.dp)) {
                                     Text(amb.phrase, fontSize = bodyFontSize, fontWeight = FontWeight.Bold, color = Color.White)
@@ -1151,10 +1156,10 @@ fun ClauseHawkApp(
                                     if (amb.quoteSnippet.isNotBlank()) {
                                         Spacer(modifier = Modifier.height(6.dp))
                                         Surface(
-                                            color = Color(0xFF0A0A0A), shape = RoundedCornerShape(6.dp),
-                                            modifier = Modifier.fillMaxWidth().border(1.dp, Color(0xFF2A2A2A), RoundedCornerShape(6.dp))
+                                            color = WarmTheme.SurfaceSubtle, shape = RoundedCornerShape(6.dp),
+                                            modifier = Modifier.fillMaxWidth().border(1.dp, WarmTheme.Border, RoundedCornerShape(6.dp))
                                         ) {
-                                            Text(text = "“Quoted Clause: ${amb.quoteSnippet}”", fontSize = captionFontSize, color = Color(0xFFCCCCCC), modifier = Modifier.padding(8.dp), lineHeight = lineSpacing)
+                                            Text(text = "“Quoted Clause: ${amb.quoteSnippet}”", fontSize = captionFontSize, color = WarmTheme.TextSecondary, modifier = Modifier.padding(8.dp), lineHeight = lineSpacing)
                                         }
                                     }
                                 }
@@ -1170,12 +1175,12 @@ fun ClauseHawkApp(
                                 Language.HINDI -> "📋 हस्ताक्षर-पूर्व समाधान चेकलिस्ट"
                                 Language.KANNADA -> "📋 ಸಹಿ ಮಾಡುವ ಮುನ್ನ ಪರಿಶೀಲನಾ ಪಟ್ಟಿ"
                             },
-                            fontSize = sectionHeaderFontSize, fontWeight = FontWeight.Bold, color = Color.White
+                            fontSize = sectionHeaderFontSize, fontWeight = FontWeight.Bold, color = WarmTheme.TextPrimary, fontFamily = FontFamily.Serif
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Card(
-                            modifier = Modifier.fillMaxWidth().border(1.dp, Color(0xFF333333), RoundedCornerShape(12.dp)),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFF121212))
+                            modifier = Modifier.fillMaxWidth().border(1.dp, WarmTheme.Border, RoundedCornerShape(12.dp)),
+                            colors = CardDefaults.cardColors(containerColor = WarmTheme.Surface)
                         ) {
                             Column(modifier = Modifier.padding(8.dp)) {
                                 checklistStates.forEachIndexed { index, item ->
@@ -1194,9 +1199,9 @@ fun ClauseHawkApp(
                                                 checklistStates[index] = item.copy(isResolved = checked)
                                             },
                                             colors = CheckboxDefaults.colors(
-                                                checkedColor = Color.White,
-                                                checkmarkColor = Color.Black,
-                                                uncheckedColor = Color(0xFF666666)
+                                                checkedColor = WarmTheme.Primary,
+                                                checkmarkColor = Color.White,
+                                                uncheckedColor = WarmTheme.Border
                                             )
                                         )
                                         Text(
@@ -1206,7 +1211,7 @@ fun ClauseHawkApp(
                                                 Language.KANNADA -> item.taskKn
                                             },
                                             fontSize = bodyFontSize,
-                                            color = if (item.isResolved) Color(0xFF666666) else Color.White
+                                            color = if (item.isResolved) WarmTheme.TextMuted else WarmTheme.TextPrimary
                                         )
                                     }
                                 }
@@ -1293,12 +1298,12 @@ fun ClauseHawkApp(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column {
-                                Text("Offline History", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                                Text("Offline History", color = WarmTheme.TextPrimary, fontSize = 22.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif)
                                 Text("Past scanned contracts & reports", color = Color(0xFFA0A0A0), fontSize = 12.sp)
                             }
 
                             IconButton(onClick = { showHistoryDrawer = false }) {
-                                Text("✕", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                                Text("✕", color = WarmTheme.TextSecondary, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                             }
                         }
 
@@ -1341,12 +1346,12 @@ fun ClauseHawkApp(
                                                 )
                                                 Spacer(modifier = Modifier.width(8.dp))
                                                 Surface(
-                                                    color = Color(0xFF333333),
+                                                    color = WarmTheme.SurfaceAlt,
                                                     shape = RoundedCornerShape(6.dp)
                                                 ) {
                                                     Text(
                                                         text = item.riskName,
-                                                        color = Color.White,
+                                                        color = WarmTheme.TextPrimary,
                                                         fontSize = 10.sp,
                                                         fontWeight = FontWeight.Bold,
                                                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
@@ -1382,12 +1387,12 @@ fun ClauseHawkApp(
     if (selectedDictWord != null) {
         AlertDialog(
             onDismissRequest = { selectedDictWord = null },
-            title = { Text(selectedDictWord!!.first, color = Color.White, fontWeight = FontWeight.Bold) },
-            text = { Text(selectedDictWord!!.second, color = Color(0xFFCCCCCC), fontSize = 13.sp) },
+            title = { Text(selectedDictWord!!.first, color = WarmTheme.TextPrimary, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif) },
+            text = { Text(selectedDictWord!!.second, color = WarmTheme.TextSecondary, fontSize = 13.sp) },
             confirmButton = {
-                TextButton(onClick = { selectedDictWord = null }) { Text("Close", color = Color.White) }
+                TextButton(onClick = { selectedDictWord = null }) { Text("Close", color = WarmTheme.Primary) }
             },
-            containerColor = Color(0xFF181818)
+            containerColor = WarmTheme.Surface
         )
     }
 }
@@ -1671,27 +1676,27 @@ private fun generatePdfReport(context: Context, result: AnalysisResult, text: St
 
 @Composable
 fun OfficialTheme(content: @Composable () -> Unit) {
-    val darkColorScheme = darkColorScheme(
-        primary = Color.White,
-        onPrimary = Color.Black,
-        background = Color(0xFF000000),
-        surface = Color(0xFF121212),
-        onSurface = Color.White,
-        onSurfaceVariant = Color(0xFFA0A0A0),
-        outline = Color(0xFF2A2A2A)
+    val warmColorScheme = lightColorScheme(
+        primary = WarmTheme.Primary,
+        onPrimary = Color.White,
+        background = WarmTheme.Background,
+        surface = WarmTheme.Surface,
+        onSurface = WarmTheme.TextPrimary,
+        onSurfaceVariant = WarmTheme.TextSecondary,
+        outline = WarmTheme.Border
     )
 
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = Color(0xFF000000).toArgb()
-            window.navigationBarColor = Color(0xFF000000).toArgb()
+            window.statusBarColor = WarmTheme.Background.toArgb()
+            window.navigationBarColor = WarmTheme.Background.toArgb()
             val insetsController = WindowCompat.getInsetsController(window, view)
-            insetsController.isAppearanceLightStatusBars = false
-            insetsController.isAppearanceLightNavigationBars = false
+            insetsController.isAppearanceLightStatusBars = true
+            insetsController.isAppearanceLightNavigationBars = true
         }
     }
 
-    MaterialTheme(colorScheme = darkColorScheme, content = content)
+    MaterialTheme(colorScheme = warmColorScheme, content = content)
 }
