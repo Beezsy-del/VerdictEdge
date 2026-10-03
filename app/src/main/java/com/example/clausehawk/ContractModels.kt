@@ -138,5 +138,59 @@ data class AnalysisResult(
     val ambiguities: List<AmbiguityTerm> = emptyList(),
     val dealbreakerMatches: List<DealbreakerMatch> = emptyList(),
     val preSigningChecklist: List<PreSigningCheckItem> = emptyList(),
-    val isInvalid: Boolean = false
+    val isInvalid: Boolean = false,
+    val contractFamily: ContractFamily = ContractFamily.GENERAL,
+    val canonicalFindings: List<Finding> = emptyList(),
+    val relations: List<Relation> = emptyList(),
+    val ledger: MoneyDateLedger = MoneyDateLedger(),
+    val missingClauses: List<MissingClause> = emptyList()
+)
+
+enum class ContractFamily(val displayName: String) {
+    SERVICES_VENDOR("Services / Vendor Agreement"),
+    EMPLOYMENT("Employment / Consulting Agreement"),
+    NDA("Non-Disclosure Agreement (NDA)"),
+    SAAS("SaaS / Cloud Agreement"),
+    GENERAL("General Commercial Agreement")
+}
+
+data class Finding(
+    val id: String,
+    val ruleId: String,
+    val category: String,
+    val severity: RiskLevel,
+    val confidencePct: Int,
+    val affectedParty: String,
+    val evidenceQuote: String,
+    val relatedClauses: List<String> = emptyList(),
+    val rationaleKey: String = "",
+    val whyItMatters: String = "",
+    val questionsToAsk: String = "",
+    val actionRecommendation: String = ""
+)
+
+data class Relation(
+    val fromClause: String,
+    val relationType: String,
+    val toClause: String,
+    val evidenceQuote: String,
+    val reason: String
+)
+
+data class MoneyDateLedger(
+    val contractValue: String? = null,
+    val liabilityCap: String? = null,
+    val lateFeeRate: String? = null,
+    val paymentTermsDays: Int? = null,
+    val terminationNoticeDays: Int? = null,
+    val autoRenewal: Boolean = false,
+    val autoRenewalOptOutDays: Int? = null,
+    val crossCheckWarnings: List<String> = emptyList()
+)
+
+data class MissingClause(
+    val name: String,
+    val importance: String,
+    val rationale: String,
+    val suggestedClauseSnippet: String
 )

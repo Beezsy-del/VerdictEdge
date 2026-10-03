@@ -577,6 +577,92 @@ class ContractEngine {
                 )
             }
 
+            val canonicalFindings = mutableListOf<Finding>()
+            val fArr = root.optJSONArray("canonical_findings") ?: org.json.JSONArray()
+            for (i in 0 until fArr.length()) {
+                val item = fArr.getJSONObject(i)
+                val sev = when (item.optString("severity").uppercase()) {
+                    "HIGH" -> RiskLevel.HIGH
+                    "MEDIUM" -> RiskLevel.MEDIUM
+                    "LOW" -> RiskLevel.LOW
+                    else -> RiskLevel.MEDIUM
+                }
+                canonicalFindings.add(
+                    Finding(
+                        id = item.optString("id"),
+                        ruleId = item.optString("rule_id"),
+                        category = item.optString("category"),
+                        severity = sev,
+                        confidencePct = item.optInt("confidence_pct", 90),
+                        affectedParty = item.optString("affected_party"),
+                        evidenceQuote = item.optString("evidence_quote"),
+                        rationaleKey = item.optString("rationale_key"),
+                        whyItMatters = item.optString("why_it_matters"),
+                        questionsToAsk = item.optString("questions_to_ask"),
+                        actionRecommendation = item.optString("action_recommendation")
+                    )
+                )
+            }
+
+            val relations = mutableListOf<Relation>()
+            val relArr = root.optJSONArray("relations") ?: org.json.JSONArray()
+            for (i in 0 until relArr.length()) {
+                val item = relArr.getJSONObject(i)
+                relations.add(
+                    Relation(
+                        fromClause = item.optString("from_clause"),
+                        relationType = item.optString("relation_type"),
+                        toClause = item.optString("to_clause"),
+                        evidenceQuote = item.optString("evidence_quote"),
+                        reason = item.optString("reason")
+                    )
+                )
+            }
+
+            val ledgerObj = root.optJSONObject("ledger")
+            val ledger = if (ledgerObj != null) {
+                val warnList = mutableListOf<String>()
+                val warnArr = ledgerObj.optJSONArray("cross_check_warnings") ?: org.json.JSONArray()
+                for (w in 0 until warnArr.length()) {
+                    warnList.add(warnArr.getString(w))
+                }
+                MoneyDateLedger(
+                    contractValue = if (ledgerObj.has("contract_value")) ledgerObj.optString("contract_value") else null,
+                    liabilityCap = if (ledgerObj.has("liability_cap")) ledgerObj.optString("liability_cap") else null,
+                    lateFeeRate = if (ledgerObj.has("late_fee_rate")) ledgerObj.optString("late_fee_rate") else null,
+                    paymentTermsDays = if (ledgerObj.has("payment_terms_days")) ledgerObj.optInt("payment_terms_days") else null,
+                    terminationNoticeDays = if (ledgerObj.has("termination_notice_days")) ledgerObj.optInt("termination_notice_days") else null,
+                    autoRenewal = ledgerObj.optBoolean("auto_renewal", false),
+                    autoRenewalOptOutDays = if (ledgerObj.has("auto_renewal_opt_out_days")) ledgerObj.optInt("auto_renewal_opt_out_days") else null,
+                    crossCheckWarnings = warnList
+                )
+            } else {
+                MoneyDateLedger()
+            }
+
+            val missingClauses = mutableListOf<MissingClause>()
+            val mcArr = root.optJSONArray("missing_clauses") ?: org.json.JSONArray()
+            for (i in 0 until mcArr.length()) {
+                val item = mcArr.getJSONObject(i)
+                missingClauses.add(
+                    MissingClause(
+                        name = item.optString("name"),
+                        importance = item.optString("importance"),
+                        rationale = item.optString("rationale"),
+                        suggestedClauseSnippet = item.optString("suggested_clause_snippet")
+                    )
+                )
+            }
+
+            val familyStr = root.optString("contract_family", "General").uppercase()
+            val family = when {
+                familyStr.contains("EMPLOYMENT") -> ContractFamily.EMPLOYMENT
+                familyStr.contains("NDA") -> ContractFamily.NDA
+                familyStr.contains("SAAS") -> ContractFamily.SAAS
+                familyStr.contains("SERVICES") -> ContractFamily.SERVICES_VENDOR
+                else -> ContractFamily.GENERAL
+            }
+
             AnalysisResult(
                 riskLevel = riskLevel,
                 summaryEn = root.optString("summary_en"),
@@ -590,7 +676,12 @@ class ContractEngine {
                 ambiguities = ambiguities,
                 dealbreakerMatches = dealbreakerMatches,
                 preSigningChecklist = preSigningChecklist,
-                isInvalid = root.optBoolean("is_invalid", false)
+                isInvalid = root.optBoolean("is_invalid", false),
+                contractFamily = family,
+                canonicalFindings = canonicalFindings,
+                relations = relations,
+                ledger = ledger,
+                missingClauses = missingClauses
             )
         } catch (e: Exception) {
             null
