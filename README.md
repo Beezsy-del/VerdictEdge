@@ -1,11 +1,23 @@
-# VerdictEdge 
+# ⚖️ VerdictEdge (Android)
 
-> **Air-Gapped, On-Device Legal Risk & Statutory Analyzer for Android**
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-Android%208.0%2B%20(API%2026%2B)-green?style=for-the-badge&logo=android" alt="Android" />
+  <img src="https://img.shields.io/badge/Language-Kotlin%201.9%20%2B%20Jetpack%20Compose-purple?style=for-the-badge&logo=kotlin" alt="Kotlin" />
+  <img src="https://img.shields.io/badge/On--Device%20LLM-SmolLM2--360M%20%2F%20Gemma%202B-orange?style=for-the-badge" alt="On-Device LLM" />
+  <img src="https://img.shields.io/badge/Jurisdiction-Indian%20Contract%20Act%201872-darkgreen?style=for-the-badge" alt="ICA 1872" />
+  <img src="https://img.shields.io/badge/Privacy-100%25%20Air--Gapped%20Offline-success?style=for-the-badge" alt="Air Gapped" />
+  <img src="https://img.shields.io/badge/Build-Passing-brightgreen?style=for-the-badge" alt="Build" />
+</p>
 
-VerdictEdge is a fully offline, privacy-first legal intelligence mobile platform. Powered by Google MediaPipe, on-device Gemma 2B LLM inference, Google ML Kit OCR, and local Neural Text-to-Speech (Sherpa-ONNX), VerdictEdge scans, parses, and identifies high-risk clauses, financial exposures, statutory voidability, and custom dealbreakers without sending a single byte to external servers.
+> **Private, 100% on-device legal contract risk analyzer for Android. Powered by on-device LLM inference (SmolLM2-360M / Gemma 2B), Google ML Kit OCR, and local Neural TTS (Sherpa-ONNX). Scans, parses, and identifies high-risk clauses, financial exposures, statutory voidability, and cross-clause conflicts without sending a single byte to external servers.**
 
 ---
 
+### 📌 GitHub Repository Details (About Box & Metadata)
+- **Tagline / About:** `Air-gapped, on-device legal risk and statutory analyzer for Android. Powered by on-device LLM inference & Indian Contract Act 1872 statutory rule engine.`
+- **Topics / Tags:** `android`, `jetpack-compose`, `legal-ai`, `on-device-llm`, `smollm2`, `gemma-2b`, `ocr`, `contract-analysis`, `air-gapped`, `privacy-first`
+
+---
 
 ## 📽️ Demo & Visuals
 
@@ -29,17 +41,21 @@ VerdictEdge is a fully offline, privacy-first legal intelligence mobile platform
 
 ---
 
-## ⚡ Core Features
+## ⚡ Core Features & Technical Blueprint
 
 * **100% On-Device & Air-Gapped:** Zero cloud dependencies. All OCR text extraction, contract evaluation, risk scoring, and audio summary synthesis happen locally.
-* **Gemma 2B + Rule Engine Analysis:** Combines on-device Gemma 2B via MediaPipe LLM Inference API with precise rule-based parsing to evaluate liabilities, indemnities, unilateral terminations, and IP assignment clauses.
-* **Statutory Voidability Detection (Indian Law):** Built-in legal rules flag illegal contract clauses under the **Indian Contract Act, 1872** (e.g., Section 27 Restraint of Trade, Section 28 Restraint of Legal Proceedings).
-* **Multi-Format & Multi-Doc OCR:** Scan single physical contract pages using the high-resolution camera or parse multi-page PDFs using Google ML Kit.
-* **Custom Dealbreaker Rules:** Input custom user constraints (e.g., *"60 days notice period"*, *"non-compete"*) to instantly evaluate compliance across multi-page agreements.
-* **Neural & System Multilingual TTS:** Instant audio summaries rendered in **English**, **Hindi (हिंदी)**, and **Kannada (ಕನ್ನಡ)**. Supports both Sherpa-ONNX Neural TTS models and Android System TTS with currency and symbol normalization.
-* **Pre-Signing Checklist & Counter-Offers:** Generates proposed counter-clause drafts to restore balance in lopsided contracts, paired with an interactive pre-signing resolution checklist.
-* **PDF Report Generation:** Export full, structured PDF reports directly to local storage for offline archival or sharing.
-* **Home Screen Quick Scan Widget:** Android App Widget for immediate one-tap camera scanning or document uploading directly from the home screen.
+* **Dual-Core Legal Architecture:**
+  * **On-Device Neural LLM:** Compact on-device intelligence (`SmolLM2-360M` / `Gemma 2B`) for executive risk synthesis, reciprocal fairness analysis, and strategic leverage.
+  * **Statutory Rule Engine:** Instant deterministic scanning under the **Indian Contract Act, 1872** (Section 27 Restraint of Trade, Section 28 Restraint of Legal Proceedings).
+* **Evidence-First Canonical Findings:** Every identified issue links directly to verbatim text extracted from the document with exact character offsets.
+* **Structured Financial & Dates Ledger:** Extracts currencies (₹, $, €, £), payment terms (Net 30/60), cure periods, and auto-renewal terms into an organized financial overview.
+* **Cross-Clause Relationship Graph & Cap Puncturing:** Detects when an uncapped indemnity or IP clause punctures an explicit limitation of liability cap elsewhere in the agreement.
+* **Family-Aware Missing-Clause Engine:** Classifies the contract family (NDA, Employment, MSA/Vendor, Consulting) and flags critical missing protections.
+* **Multi-Format & Multi-Doc OCR:** Scan physical contracts using the camera or parse multi-page PDFs using Google ML Kit.
+* **Neural & System Multilingual TTS:** Instant audio summaries rendered in **English**, **Hindi (हिंदी)**, and **Kannada (ಕನ್ನಡ)** using Sherpa-ONNX or Android System TTS.
+* **Pre-Signing Checklist & Counter-Offers:** Interactive pre-signing checklist with auto-generated balanced counter-proposals.
+* **Home Screen Quick Scan Widget:** Android App Widget for immediate one-tap camera scanning or document uploading.
+* **Offline PDF Report Export:** Generates clean, formatted PDF reports saved directly to device storage.
 
 ---
 
@@ -54,33 +70,36 @@ VerdictEdge is a fully offline, privacy-first legal intelligence mobile platform
                                                     v
 +---------------------------------------------------------------------------------------------------+
 |                                        MainActivity (Compose UI)                                  |
+|            (InputScreen, AnalysisScreen, WarningsScreen, LedgerView, HistoryDrawer)               |
 +---------------------------------------------------------------------------------------------------+
           |                                         |                                     |
           v                                         v                                     v
 +-------------------+                   +-----------------------+               +-------------------+
 |    OcrManager     |                   |    ContractEngine     |               |   VoiceManager    |
-| (Google ML Kit)   |                   | (Gemma 2B / MediaPipe)|               |  (Sherpa-ONNX /   |
-+---------+---------+                   +-----------+-----------+               |   System TTS)     |
-          |                                         |                           +---------+---------+
-          v                                         v                                     v
-+-------------------+                   +-----------------------+               +-------------------+
-| Dynamic Image/PDF |                   |  Risk, Statutory &    |               | Multilingual      |
-| Text Extraction   |                   |  Ambiguity Engine     |               | Audio Playback    |
-+---------+---------+                   +-----------+-----------+               +---------+---------+
+| (Google ML Kit)   |                   | (On-Device LLM +      |               |  (Sherpa-ONNX /   |
++---------+---------+                   |  Statutory & Rules)   |               |   System TTS)     |
+          |                             +-----------+-----------+               +---------+---------+
+          v                                         |                                     |
++-------------------+                   +-----------+-----------+                         v
+| Dynamic Image/PDF |                   | Financial Ledger      |               +-------------------+
+| Text Extraction   |                   | Cross-Clause Graph    |               | Multilingual      |
++---------+---------+                   | Missing Clause Engine |               | Audio Playback    |
+          |                             | Counter-Offer Drafter |               +---------+---------+
+          |                             +-----------+-----------+                         |
           |                                         |                                     |
           +--------------------+--------------------+-------------------------------------+
                                |
                                v
-               +-------------------------------+
-               |     Analysis Result Model     |
-               |  (Risk, Voidability, PDF)     |
-               +---------------+---------------+
-                               |
-                               v
-               +-------------------------------+
-               |  Local Encrypted History Store|
-               |       (SharedPreferences)     |
-               +---------------+---------------+
+                +-------------------------------+
+                |     Analysis Result Model     |
+                | (Findings, Ledger, Graph, PDF)|
+                +---------------+---------------+
+                                |
+                                v
+                +-------------------------------+
+                |  Local Encrypted History Store|
+                |       (SharedPreferences)     |
+                +-------------------------------+
 ```
 
 ---
@@ -91,7 +110,7 @@ VerdictEdge is a fully offline, privacy-first legal intelligence mobile platform
 | :--- | :--- |
 | **Language** | Kotlin 1.9+ |
 | **UI Framework** | Jetpack Compose, Material3, Material Icons |
-| **On-Device LLM** | Google MediaPipe LLM Inference API (`tasks-genai`), Gemma 2B |
+| **On-Device LLM** | SmolLM2-360M / Gemma 2B via MediaPipe LLM Inference API |
 | **Vision / OCR** | Google ML Kit Text Recognition (`com.google.mlkit:text-recognition`) |
 | **Neural TTS Engine** | Sherpa-ONNX (`vits-piper`), Android `TextToSpeech` |
 | **Document Processing** | Android native `PdfDocument`, FileProvider API |
@@ -105,16 +124,18 @@ VerdictEdge is a fully offline, privacy-first legal intelligence mobile platform
 VerdictEdge automatically detects and extracts:
 
 1. **Statutory Voidability Warnings:**
-   * **Section 27 (Indian Contract Act):** Restraint of trade, occupation, or business.
+   * **Section 27 (Indian Contract Act):** Restraint of trade, occupation, or post-employment non-competes (*Niranjan Shankar Golikari*, *Percept D'Mark*).
    * **Section 28 (Indian Contract Act):** Unlawful restraint of legal proceedings or jurisdiction limitations.
 2. **Vulnerabilities & Lopsided Provisions:**
    * **Unbalanced Indemnity & Unlimited Liabilities**
    * **Unilateral Termination & One-sided Modifications**
    * **Irrevocable IP Assignment & Perpetuity**
    * **Hidden Auto-Renewals & Excessive Termination Fees**
-3. **Financial Exposure Analysis:**
-   * Calculates financial caps, penalty amounts, interest rates, and fee obligations.
-4. **Ambiguity & Discretion Detector:**
+3. **Structured Financial Ledger:**
+   * Financial caps, penalty amounts, interest rates, payment milestones, and cure periods.
+4. **Cross-Clause Conflicts & Punctured Caps:**
+   * Detects carve-outs where indemnities negate limitation of liability protections.
+5. **Ambiguity & Discretion Detector:**
    * Flags subjective phrases like *"at sole discretion"*, *"reasonable efforts"*, *"from time to time"*, and *"as deemed fit"*.
 
 ---
@@ -126,9 +147,10 @@ VerdictEdge/
 ├── app/
 │   └── src/
 │       └── main/
-│           ├── java/com/example/VerdictEdge/
+│           ├── java/com/example/clausehawk/
 │           │   ├── MainActivity.kt        # Main Compose Application Shell & PDF Exporter
-│           │   ├── ContractEngine.kt      # Core Risk, Statutory Analysis & Gemma Pipeline
+│           │   ├── ContractEngine.kt      # Core Risk, Statutory Analysis & Blueprint Logic
+│           │   ├── ContractModels.kt      # Canonical Findings, Ledger, and Graph Models
 │           │   ├── OcrManager.kt          # ML Kit Image/PDF OCR Processor
 │           │   ├── VoiceManager.kt        # Sherpa-ONNX & System TTS Engine
 │           │   └── QuickScanWidget.kt     # AppWidget Provider for Home Screen Quick Scan
@@ -138,11 +160,13 @@ VerdictEdge/
 │               └── xml/
 │                   └── quick_scan_widget_info.xml
 ├── docs/                                  # Assets directory for README media
-│   ├── demo.mp4                           # App Walkthrough Video
+│   ├── demo.gif                           # App Walkthrough GIF
 │   ├── screenshot-input.png               # Input & Scanning Screen
 │   ├── screenshot-analysis.png            # Contract Analysis Output
 │   ├── screenshot-warnings.png            # Statutory Warning Details
-│   └── screenshot-history.png             # Local History Drawer
+│   ├── screenshot-history.png             # Local History Drawer
+│   ├── screenshot-pdf.png                 # Export PDF Screen
+│   └── screenshot-widget.png              # Home Screen Widget
 ├── build.gradle.kts
 ├── settings.gradle.kts
 └── README.md
@@ -156,28 +180,25 @@ VerdictEdge/
 
 * Android Studio Jellyfish | 2023.3.1 or newer
 * Android SDK 26 (Android 8.0) or higher (Target SDK: 34)
-* Physical Android device recommended for camera OCR & Sherpa-ONNX speech synthesis
+* Physical Android device or Android Emulator (API 34 / Pixel 9)
 
 ### Installation
 
 1. **Clone the Repository:**
    ```bash
-   git clone [https://github.com/ssaiskanda0-spec/VerdictEdge](https://github.com/ssaiskanda0-spec/VerdictEdge)
+   git clone https://github.com/Beezsy-del/VerdictEdge.git
    cd VerdictEdge
    ```
 
-2. **Model Setup (Gemma 2B & Sherpa-ONNX):**
-   * Download the `gemma-2b-it-gpu-int4.bin` model file from Google AI Edge / Kaggle.
-   * Place the model file in the app assets folder:
-     ```
-     app/src/main/assets/gemma-2b-it-gpu-int4.bin
-     ```
-   * (Optional) Place Sherpa-ONNX VITS voice models (`vits-piper-en_US-amy-medium-int8`) in `assets/sherpa_models/`.
+2. **Build with Gradle:**
+   ```bash
+   ./gradlew assembleDebug
+   ```
 
-3. **Build & Run:**
-   * Open the project in Android Studio.
-   * Sync Gradle files.
-   * Run the `app` configuration on your Android device.
+3. **Install to Connected Device / Emulator:**
+   ```bash
+   ./gradlew installDebug
+   ```
 
 ---
 
@@ -194,4 +215,9 @@ VerdictEdge includes a quick launcher widget for instant contract scanning:
 
 ## ⚠️ Disclaimer
 
-VerdictEdge / VerdictEdge is an automated artificial intelligence tool designed for informational and educational assistance only. It does not constitute formal legal advice. For binding contract evaluations, always consult a qualified legal practitioner.
+VerdictEdge is an automated artificial intelligence tool designed for informational and educational assistance only. It does not constitute formal legal advice. For binding contract evaluations, always consult a qualified legal practitioner.
+
+---
+
+## 📄 License
+VerdictEdge is released under the **MIT License**.
