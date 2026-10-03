@@ -23,6 +23,23 @@ class ContractEngine {
             )
         }
 
+        // Fast-path: Execute high-performance native Rust engine if loaded
+        if (VerdictEdgeBridge.isLoaded()) {
+            try {
+                val json = VerdictEdgeBridge.analyzeContract(
+                    trimmed,
+                    customDealbreakers.toTypedArray(),
+                    "en"
+                )
+                val parsed = parseRustAnalysisResult(json)
+                if (parsed != null) {
+                    return@withContext parsed
+                }
+            } catch (e: Throwable) {
+                android.util.Log.w("ContractEngine", "Native Rust execution fallback: ${e.message}")
+            }
+        }
+
         val redFlags = mutableListOf<RedFlag>()
         val deadlines = mutableListOf<DeadlineObligation>()
         val financialExposures = mutableListOf<FinancialExposure>()
@@ -418,5 +435,165 @@ class ContractEngine {
         )
         val keywordMatches = legalKeywords.count { lowerText.contains(it) }
         return keywordMatches >= 1
+    }
+
+    private fun parseRustAnalysisResult(jsonStr: String): AnalysisResult? {
+        return try {
+            val root = org.json.JSONObject(jsonStr)
+            val riskStr = root.optString("risk_level", "Low")
+            val riskLevel = when (riskStr.lowercase()) {
+                "high" -> RiskLevel.HIGH
+                "medium" -> RiskLevel.MEDIUM
+                "invalid" -> RiskLevel.INVALID
+                else -> RiskLevel.LOW
+            }
+
+            val redFlags = mutableListOf<RedFlag>()
+            val rfArr = root.optJSONArray("red_flags") ?: org.json.JSONArray()
+            for (i in 0 until rfArr.length()) {
+                val item = rfArr.getJSONObject(i)
+                redFlags.add(
+                    RedFlag(
+                        titleEn = item.optString("title_en"),
+                        titleHi = item.optString("title_hi"),
+                        titleKn = item.optString("title_kn"),
+                        descEn = item.optString("desc_en"),
+                        descHi = item.optString("desc_hi"),
+                        descKn = item.optString("desc_kn"),
+                        quoteSnippet = item.optString("quote_snippet")
+                    )
+                )
+            }
+
+            val statutoryVoidabilities = mutableListOf<StatutoryVoidability>()
+            val svArr = root.optJSONArray("statutory_voidabilities") ?: org.json.JSONArray()
+            for (i in 0 until svArr.length()) {
+                val item = svArr.getJSONObject(i)
+                statutoryVoidabilities.add(
+                    StatutoryVoidability(
+                        actSection = item.optString("act_section"),
+                        titleEn = item.optString("title_en"),
+                        titleHi = item.optString("title_hi"),
+                        titleKn = item.optString("title_kn"),
+                        legalReasonEn = item.optString("legal_reason_en"),
+                        legalReasonHi = item.optString("legal_reason_hi"),
+                        legalReasonKn = item.optString("legal_reason_kn"),
+                        quoteSnippet = item.optString("quote_snippet"),
+                        status = item.optString("status", "POTENTIALLY VOID")
+                    )
+                )
+            }
+
+            val clauseBreakdowns = mutableListOf<ProblemSolutionBreakdown>()
+            val cbArr = root.optJSONArray("clause_breakdowns") ?: org.json.JSONArray()
+            for (i in 0 until cbArr.length()) {
+                val item = cbArr.getJSONObject(i)
+                clauseBreakdowns.add(
+                    ProblemSolutionBreakdown(
+                        originalSnippet = item.optString("original_snippet"),
+                        problemEn = item.optString("problem_en"),
+                        problemHi = item.optString("problem_hi"),
+                        problemKn = item.optString("problem_kn"),
+                        solutionEn = item.optString("solution_en"),
+                        solutionHi = item.optString("solution_hi"),
+                        solutionKn = item.optString("solution_kn"),
+                        counterOfferDraft = item.optString("counter_offer_draft")
+                    )
+                )
+            }
+
+            val preSigningChecklist = mutableListOf<PreSigningCheckItem>()
+            val psArr = root.optJSONArray("pre_signing_checklist") ?: org.json.JSONArray()
+            for (i in 0 until psArr.length()) {
+                val item = psArr.getJSONObject(i)
+                preSigningChecklist.add(
+                    PreSigningCheckItem(
+                        id = item.optInt("id", i + 1),
+                        taskEn = item.optString("task_en"),
+                        taskHi = item.optString("task_hi"),
+                        taskKn = item.optString("task_kn"),
+                        isResolved = item.optBoolean("is_resolved", false)
+                    )
+                )
+            }
+
+            val deadlines = mutableListOf<DeadlineObligation>()
+            val dlArr = root.optJSONArray("deadlines") ?: org.json.JSONArray()
+            for (i in 0 until dlArr.length()) {
+                val item = dlArr.getJSONObject(i)
+                deadlines.add(
+                    DeadlineObligation(
+                        timeframe = item.optString("timeframe"),
+                        obligationEn = item.optString("obligation_en"),
+                        obligationHi = item.optString("obligation_hi"),
+                        obligationKn = item.optString("obligation_kn"),
+                        quoteSnippet = item.optString("quote_snippet")
+                    )
+                )
+            }
+
+            val financialExposures = mutableListOf<FinancialExposure>()
+            val feArr = root.optJSONArray("financial_exposures") ?: org.json.JSONArray()
+            for (i in 0 until feArr.length()) {
+                val item = feArr.getJSONObject(i)
+                financialExposures.add(
+                    FinancialExposure(
+                        titleEn = item.optString("title_en"),
+                        titleHi = item.optString("title_hi"),
+                        titleKn = item.optString("title_kn"),
+                        amountOrCost = item.optString("amount_or_cost"),
+                        descriptionEn = item.optString("description_en"),
+                        descriptionHi = item.optString("description_hi"),
+                        descriptionKn = item.optString("description_kn"),
+                        quoteSnippet = item.optString("quote_snippet")
+                    )
+                )
+            }
+
+            val ambiguities = mutableListOf<AmbiguityTerm>()
+            val ambArr = root.optJSONArray("ambiguities") ?: org.json.JSONArray()
+            for (i in 0 until ambArr.length()) {
+                val item = ambArr.getJSONObject(i)
+                ambiguities.add(
+                    AmbiguityTerm(
+                        phrase = item.optString("phrase"),
+                        explanationEn = item.optString("explanation_en"),
+                        explanationHi = item.optString("explanation_hi"),
+                        explanationKn = item.optString("explanation_kn"),
+                        quoteSnippet = item.optString("quote_snippet")
+                    )
+                )
+            }
+
+            val dealbreakerMatches = mutableListOf<DealbreakerMatch>()
+            val dbArr = root.optJSONArray("dealbreaker_matches") ?: org.json.JSONArray()
+            for (i in 0 until dbArr.length()) {
+                val item = dbArr.getJSONObject(i)
+                dealbreakerMatches.add(
+                    DealbreakerMatch(
+                        ruleKeyword = item.optString("rule_keyword"),
+                        matchedContext = item.optString("matched_context")
+                    )
+                )
+            }
+
+            AnalysisResult(
+                riskLevel = riskLevel,
+                summaryEn = root.optString("summary_en"),
+                summaryHi = root.optString("summary_hi"),
+                summaryKn = root.optString("summary_kn"),
+                redFlags = redFlags,
+                deadlines = deadlines,
+                financialExposures = financialExposures,
+                statutoryVoidabilities = statutoryVoidabilities,
+                clauseBreakdowns = clauseBreakdowns,
+                ambiguities = ambiguities,
+                dealbreakerMatches = dealbreakerMatches,
+                preSigningChecklist = preSigningChecklist,
+                isInvalid = root.optBoolean("is_invalid", false)
+            )
+        } catch (e: Exception) {
+            null
+        }
     }
 }

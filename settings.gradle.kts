@@ -22,6 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ClauseHawk"
+rootProject.name = "VerdictEdge"
 include(":app")
  
